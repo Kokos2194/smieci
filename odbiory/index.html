@@ -127,29 +127,38 @@ h1,h2,h3{text-wrap:balance}
 .chips.sm .chip{min-height:38px;font-size:14.5px;padding:6px 12px;line-height:1.2}
 
 /* building section */
-.bld{position:relative;margin-inline:8px;border-inline:2px solid var(--ink);background:var(--surface)}
-.roof{height:9px;margin-inline:-9px;border-top:3px solid var(--ink);border-bottom:2px solid var(--ink);background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 9px)}
-.fl{display:grid;grid-template-columns:62px minmax(0,1fr);border-bottom:2px solid var(--ink)}
+.bld-scroll{overflow-x:auto;margin-inline:-16px;padding:2px 8px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.bld{position:relative;margin-inline:6px;min-width:calc(56px + var(--n,4) * 58px);border-inline:2px solid var(--ink);background:var(--surface)}
+.roof{height:9px;margin-inline:-6px;border-top:3px solid var(--ink);border-bottom:2px solid var(--ink);background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 9px)}
+.fl{display:grid;grid-template-columns:52px minmax(0,1fr);border-bottom:2px solid var(--ink)}
 .fl.under{background-image:repeating-linear-gradient(135deg,var(--hatch-soft) 0 5px,transparent 5px 10px)}
-.fl-lab{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;padding:8px 6px 8px 8px;border:0;border-right:1px solid var(--line);background:var(--surface-2);text-align:left;min-width:0}
-.fl-lab b{font:700 22px/1 var(--f-display)}
+.fl-lab{position:sticky;left:0;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;padding:8px 4px 8px 7px;border:0;border-right:1px solid var(--line);background:var(--surface-2);text-align:left;min-width:0}
+.fl-lab b{font:700 21px/1 var(--f-display)}
 .fl-lab span{font-size:11.5px;line-height:1.2;color:var(--ink-2);overflow-wrap:anywhere}
 .fl-lab:hover b{color:var(--accent)}
-.fl-units{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));overflow:hidden;min-width:0}
-.u{position:relative;min-height:72px;padding:8px 8px 15px;border:0;background-color:transparent;text-align:left;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);display:flex;flex-direction:column;min-width:0}
+.fl-units{display:grid;grid-template-columns:repeat(var(--n,4),minmax(58px,1fr));overflow:hidden;min-width:0}
+.u{position:relative;min-height:72px;padding:8px 7px 15px;border:0;background-color:transparent;text-align:left;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);display:flex;flex-direction:column;min-width:0}
 .u:hover .u-n{color:var(--accent)}
-.u-n{font:600 18px/1.1 var(--f-display);overflow-wrap:break-word;hyphens:auto;padding-right:20px}
+.u-n{font:600 18px/1.1 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .u.common{background-image:repeating-linear-gradient(135deg,var(--hatch-soft) 0 6px,transparent 6px 12px)}
-.u.common .u-n{font-size:13px;font-weight:500;line-height:1.15;padding-right:22px}
+.u.common .u-n{font-size:13px;font-weight:600;line-height:1.15;white-space:normal}
 .u.st-open{background-color:var(--open-soft)}
 .u.st-done{background-color:var(--done-soft)}
-.u-c{position:absolute;top:6px;right:5px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--open);color:var(--on-signal);font:600 13.5px/22px var(--f-display);text-align:center}
-.u-ok{position:absolute;top:5px;right:4px;color:var(--done)}
+.u-c{position:absolute;bottom:14px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--open);color:var(--on-signal);font:600 13.5px/22px var(--f-display);text-align:center}
+.u-ok{position:absolute;bottom:12px;right:5px;color:var(--done)}
 .u-ok .ic{width:20px;height:20px;stroke-width:2.6}
 .u-bar{position:absolute;left:8px;right:8px;bottom:6px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--done) var(--p),var(--open) var(--p))}
 .u-add{align-items:center;justify-content:center;gap:4px;color:var(--ink-2);font-size:13px;grid-column:1/-1;flex-direction:row}
-.ground{height:14px;margin-inline:-16px;background:repeating-linear-gradient(135deg,var(--hatch) 0 1.5px,transparent 1.5px 7px)}
+.ground{height:14px;margin-inline:-14px;background:repeating-linear-gradient(135deg,var(--hatch) 0 1.5px,transparent 1.5px 7px)}
+.kl-head{display:grid;grid-template-columns:52px repeat(var(--n,4),minmax(58px,1fr));min-width:calc(56px + var(--n,4) * 58px);margin-inline:6px;padding-inline:2px;margin-bottom:4px}
+.kl-head>*{min-width:0;padding:4px 8px 3px;border:0;background:none;text-align:left;font:700 13px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kl-head button:hover{color:var(--accent)}
+.kl-head .kst{box-shadow:inset 2px 0 0 var(--ink)}
+.u.kst{box-shadow:inset 2px 0 0 var(--ink),1px 0 0 var(--line),0 1px 0 var(--line);padding-left:9px}
+.u-empty{min-height:72px;min-width:0}
+.u-empty.kst{box-shadow:inset 2px 0 0 var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2)}
+.legend .l-kl{border:0;border-left:3px solid var(--ink);border-radius:0;background:none;width:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend i{width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:var(--surface)}
 .legend .l-open{background:var(--open-soft);border-color:var(--open)}
@@ -425,6 +434,14 @@ const defectsOfUnit=id=>idx().defBy.get(id)||[];
 const defectsOfProject=pid=>idx().defByP.get(pid)||[];
 const unitsOfProject=pid=>floorsOf(pid).flatMap(f=>unitsOf(f.id));
 function counts(list){let o=0,d=0;for(const x of list)x.done?d++:o++;return {open:o,done:d,total:o+d}}
+/* klatki (staircases): project.klatki lists them in order, unit.klatka assigns a unit; '' = whole building */
+const kLabel=k=>k?'Klatka '+k:'';
+const unitKl=id=>((Store.data.units.get(id)||{}).klatka)||'';
+function klatkiOf(pid){const p=Store.data.projects.get(pid);const out=[...((p&&p.klatki)||[])];for(const u of unitsOfProject(pid))if(u.klatka&&!out.includes(u.klatka))out.push(u.klatka);return out}
+function selKlatka(pid){const k=S.kl.get(pid)||'all';return k==='all'||klatkiOf(pid).includes(k)?k:'all'}
+function parseKlatki(v){return [...new Set(String(v||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean))].slice(0,12)}
+function unitSeq(pid){const kl=klatkiOf(pid),lv=new Map(floorsOf(pid).map((f,i)=>[f.id,i]));return unitsOfProject(pid).slice().sort((a,b)=>(kl.indexOf(a.klatka||'')-kl.indexOf(b.klatka||''))||(lv.get(a.floorId)-lv.get(b.floorId))||((a.order||0)-(b.order||0))||cmp(a.name,b.name))}
+const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor].filter(Boolean).join(' · ');
 
 function writeErr(e){
   console.warn(e);const c=e&&e.code;
@@ -481,7 +498,7 @@ function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader(
 async function dataUrlToBlob(u){const r=await fetch(u);return r.blob()}
 
 /* ---------- navigation ---------- */
-const S={view:'home',projectId:null,unitId:null,unitFilter:'all',report:{cat:'all',status:'open',floor:'all',photos:Prefs.get('pdfPhotos',true)}};
+const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',photos:Prefs.get('pdfPhotos',true)}};
 const stack=[];let ignorePop=false;
 function go(view,params={}){
   stack.push({view:S.view,projectId:S.projectId,unitId:S.unitId,y:window.scrollY});
@@ -511,8 +528,13 @@ function render(){
   else if(S.view==='report')html=viewReport();
   else if(S.view==='settings')html=viewSettings();
   else html=viewHome();
+  const sc=$('.bld-scroll',app);if(sc)bldScroll.set(sc.dataset.pid,sc.scrollLeft);
   app.innerHTML=html;hydrate(app);
+  const sc2=$('.bld-scroll',app);if(sc2){sc2.scrollLeft=bldScroll.get(sc2.dataset.pid)||0;bldHint()}
 }
+const bldScroll=new Map();
+function bldHint(){const sc=$('.bld-scroll'),h=$('#bld-hint');if(sc&&h)h.hidden=sc.scrollWidth<=sc.clientWidth+2}
+window.addEventListener('resize',bldHint);
 function top({title,sub='',back:b=true,actions='',brand=false}){
   return `<header class="top gut"><div class="top-in">${b?`<button class="ib back" data-act="back" aria-label="Wstecz">${ic(UI.back)}</button>`:''}<div class="top-t ${brand?'brand':''}"><h1>${esc(title)}</h1>${sub?`<p>${sub}</p>`:''}</div>${actions}</div></header>`;
 }
@@ -551,6 +573,8 @@ function viewProject(){
   const flats=unitsOfProject(p.id).filter(u=>u.kind!=='common');const cleanFlats=flats.filter(u=>!counts(defectsOfUnit(u.id)).open).length;
   const byCat=new Map();for(const d of ds)if(!d.done)byCat.set(d.cat,(byCat.get(d.cat)||0)+1);
   const chips=CATS.filter(k=>byCat.get(k.id)).map(k=>`<button class="chip" data-act="report-cat" data-cat="${k.id}">${ic(k.ic)}${k.name}<span class="n">${byCat.get(k.id)}</span></button>`).join('');
+  const kl=klatkiOf(p.id),sel=selKlatka(p.id);
+  const klTabs=kl.length>1?`<div class="chips" role="group" aria-label="Klatka"><button class="chip" data-act="kl" data-k="all" aria-pressed="${sel==='all'}">Cały budynek</button>${kl.map(k=>{const n=ds.filter(d=>!d.done&&unitKl(d.unitId)===k).length;return `<button class="chip" data-act="kl" data-k="${esc(k)}" aria-pressed="${sel===k}">${esc(kLabel(k))}<span class="n ${n?'':'z'}">${n}</span></button>`}).join('')}</div>`:'';
   return `${top({title:p.name,sub:esc(p.address||''),actions:`<button class="ib" data-act="edit-project" data-id="${p.id}" aria-label="Edytuj budowę">${ic(UI.more)}</button>`})}
   <main class="main gut">
     ${p.demo?`<div class="note">${ic(UI.info)}<p>To przykładowa budowa do wypróbowania. Odhaczaj, dopisuj, generuj zestawienia. Usuniesz ją w menu ⋯ u góry.</p></div>`:''}
@@ -559,27 +583,44 @@ function viewProject(){
       ${chips?`<div class="chips">${chips}</div>`:`<p class="hint">${c.total?'Wszystkie usterki są poprawione.':'Brak wpisanych usterek. Wybierz mieszkanie na przekroju poniżej.'}</p>`}
     </section>
     <section class="sec"><div class="sh"><h2>Budynek</h2><button class="btn sm" data-act="add-floor">${ic(UI.plus)}Kondygnacja</button></div>
+      ${klTabs}
       ${buildingHtml(p,fl)}
-      ${fl.length?`<div class="legend"><span><i class="l-open"></i>są usterki</span><span><i class="l-done"></i>wszystko poprawione</span><span><i></i>bez usterek</span><span><i class="l-com"></i>część wspólna</span></div>
+      ${fl.length?`<div class="legend"><span><i class="l-open"></i>są usterki</span><span><i class="l-done"></i>wszystko poprawione</span><span><i></i>bez usterek</span><span><i class="l-com"></i>część wspólna</span>${kl.length>1?'<span><i class="l-kl"></i>granica klatki</span>':''}</div>
       <p class="hint">Dotknij mieszkania, żeby wpisać usterki. Dotknij oznaczenia kondygnacji (np. +1), żeby ją zmienić albo dodać lokal.</p>`:''}
     </section>
   </main>
   <div class="bar gut"><div class="bar-in"><button class="btn pri grow" data-act="report">${ic(UI.list)}Zestawienie usterek</button></div></div>`;
 }
 function buildingHtml(p,fl){
-  if(!fl.length)return `<div class="empty">${ART_BUILDING}<h3>Budynek jest pusty</h3><p>Generator utworzy kondygnacje i mieszkania z numeracją. Potem możesz je dowolnie zmieniać.</p><button class="btn pri" data-act="generator">Generator kondygnacji</button></div>`;
+  if(!fl.length)return `<div class="empty">${ART_BUILDING}<h3>Budynek jest pusty</h3><p>Generator utworzy kondygnacje, klatki i mieszkania z numeracją. Potem możesz je dowolnie zmieniać.</p><button class="btn pri" data-act="generator">Generator kondygnacji</button></div>`;
+  const all=klatkiOf(p.id),sel=selKlatka(p.id),kl=sel==='all'?all:[sel];
+  // one row per floor: each klatka is a block of columns as wide as its fullest floor
+  const rows=new Map(),width=new Map(kl.map(k=>[k,1]));let mixed=0,onlyUn=0;
+  for(const f of fl){
+    const m=new Map();for(const u of unitsOf(f.id)){const k=u.klatka||'';if(!m.has(k))m.set(k,[]);m.get(k).push(u)}rows.set(f.id,m);
+    for(const k of kl)width.set(k,Math.max(width.get(k),(m.get(k)||[]).length));
+    const un=(m.get('')||[]).length,hasK=kl.some(k=>(m.get(k)||[]).length);
+    if(un&&(hasK||!kl.length))mixed=Math.max(mixed,un);else if(un)onlyUn=Math.max(onlyUn,un);
+  }
+  const blocks=kl.map(k=>({k,w:width.get(k)}));if(mixed||!blocks.length)blocks.push({k:'',w:Math.max(1,mixed)});
+  let T=blocks.reduce((a,b)=>a+b.w,0);if(T<onlyUn){blocks[blocks.length-1].w+=onlyUn-T;T=onlyUn}
+  const head=kl.length?`<div class="kl-head" style="--n:${T}"><span></span>${blocks.map((b,i)=>b.k?`<button class="${i?'kst':''}" style="grid-column:span ${b.w}" data-act="kl" data-k="${esc(sel===b.k?'all':b.k)}">${esc(kLabel(b.k))}</button>`:`<span class="${i?'kst':''}" style="grid-column:span ${b.w}"></span>`).join('')}</div>`:'';
   const desc=[...fl].sort((a,b)=>b.level-a.level);const hasAbove=desc.some(f=>f.level>=0);
-  let out='<div class="bld"><div class="roof"></div>',ground=false;
-  for(const f of desc){if(!ground&&hasAbove&&f.level<0){out+='<div class="ground" title="Poziom terenu"></div>';ground=true}out+=floorRow(f)}
+  let out=`<p class="hint" id="bld-hint" hidden>Przesuń przekrój palcem w bok, żeby zobaczyć pozostałe lokale →</p><div class="bld-scroll" data-pid="${p.id}">${head}<div class="bld" style="--n:${T}"><div class="roof"></div>`,ground=false;
+  for(const f of desc){if(!ground&&hasAbove&&f.level<0){out+='<div class="ground" title="Poziom terenu"></div>';ground=true}out+=floorRow(f,rows.get(f.id),blocks,T,kl)}
   if(!ground)out+='<div class="ground" title="Poziom terenu"></div>';
-  return out+'</div>';
+  return out+'</div></div>';
 }
-function floorRow(f){
-  const cells=unitsOf(f.id).map(u=>{
-    const c=counts(defectsOfUnit(u.id));const st=c.open?'st-open':c.done?'st-done':'';const pc=c.total?Math.round(c.done/c.total*100):0;
-    return `<button class="u ${u.kind==='common'?'common':''} ${st}" data-act="open-unit" data-id="${u.id}" aria-label="${esc(u.name)}: ${c.open} do poprawy, ${c.done} poprawione"><span class="u-n">${esc(u.name)}</span>${c.open?`<span class="u-c">${c.open}</span>`:c.done?`<span class="u-ok">${ic(UI.check)}</span>`:''}${c.total?`<i class="u-bar" style="--p:${pc}%"></i>`:''}</button>`;
-  }).join('');
-  return `<div class="fl ${f.level<0?'under':''}"><button class="fl-lab" data-act="edit-floor" data-id="${f.id}" aria-label="Kondygnacja ${esc(f.name)} – edytuj"><b>${lvlCode(f.level)}</b><span>${esc(f.name)}</span></button><div class="fl-units">${cells||`<button class="u u-add" data-act="add-unit" data-floor="${f.id}">${ic(UI.plus)}Dodaj lokal</button>`}</div></div>`;
+function unitCell(u,cls='',style=''){
+  const c=counts(defectsOfUnit(u.id));const st=c.open?'st-open':c.done?'st-done':'';const pc=c.total?Math.round(c.done/c.total*100):0;
+  return `<button class="u ${u.kind==='common'?'common':''} ${st} ${cls}" ${style?`style="${style}"`:''} data-act="open-unit" data-id="${u.id}" title="${esc(u.name)}" aria-label="${esc((u.klatka?kLabel(u.klatka)+', ':'')+u.name)}: ${c.open} do poprawy, ${c.done} poprawione"><span class="u-n">${esc(u.kind==='common'&&/^klatka schodowa$/i.test(u.name)?'Klatka':u.name)}</span>${c.open?`<span class="u-c">${c.open}</span>`:c.done?`<span class="u-ok">${ic(UI.check)}</span>`:''}${c.total?`<i class="u-bar" style="--p:${pc}%"></i>`:''}</button>`;
+}
+function floorRow(f,m,blocks,T,kl){
+  const un=m.get('')||[],hasK=kl.some(k=>(m.get(k)||[]).length);let cells='';
+  if(!unitsOf(f.id).length)cells=`<button class="u u-add" data-act="add-unit" data-floor="${f.id}">${ic(UI.plus)}Dodaj lokal</button>`;
+  else if(kl.length&&!hasK&&un.length){let used=0;cells=un.map((u,i)=>{const sp=i===un.length-1?T-used:Math.max(1,Math.floor(T/un.length));used+=sp;return unitCell(u,'','grid-column:span '+sp)}).join('')}
+  else blocks.forEach((b,bi)=>{const us=b.k?(m.get(b.k)||[]):un;for(let i=0;i<b.w;i++){const cls=i===0&&bi>0?'kst':'';cells+=us[i]?unitCell(us[i],cls):`<span class="u-empty ${cls}"></span>`}});
+  return `<div class="fl ${f.level<0?'under':''}"><button class="fl-lab" data-act="edit-floor" data-id="${f.id}" aria-label="Kondygnacja ${esc(f.name)} – edytuj"><b>${lvlCode(f.level)}</b><span>${esc(f.name)}</span></button><div class="fl-units">${cells}</div></div>`;
 }
 
 function defectItem(d,compact){
@@ -597,9 +638,9 @@ function viewUnit(){
   const f=Store.data.floors.get(u.floorId),p=Store.data.projects.get(u.projectId);
   const all=defectsOfUnit(u.id),c=counts(all);
   const list=all.filter(d=>S.unitFilter==='all'||(S.unitFilter==='open'?!d.done:d.done));
-  const seq=unitsOfProject(u.projectId),i=seq.findIndex(x=>x.id===u.id),prev=seq[i-1],next=seq[i+1];
+  const seq=unitSeq(u.projectId),i=seq.findIndex(x=>x.id===u.id),prev=seq[i-1],next=seq[i+1];
   const seg=[['all','Wszystkie',c.total],['open','Do poprawy',c.open],['done','Poprawione',c.done]].map(([k,l,n])=>`<button data-act="ufilter" data-f="${k}" aria-pressed="${S.unitFilter===k}">${l} <span>${n}</span></button>`).join('');
-  return `${top({title:u.name,sub:esc([f&&f.name,p&&p.name].filter(Boolean).join(' · ')),actions:`<button class="ib" data-act="edit-unit" data-id="${u.id}" aria-label="Edytuj lokal">${ic(UI.more)}</button>`})}
+  return `${top({title:u.name,sub:esc([u.klatka&&kLabel(u.klatka),f&&f.name,p&&p.name].filter(Boolean).join(' · ')),actions:`<button class="ib" data-act="edit-unit" data-id="${u.id}" aria-label="Edytuj lokal">${ic(UI.more)}</button>`})}
   <main class="main gut">
     ${c.total?`<div class="seg" role="group" aria-label="Filtr">${seg}</div>`:''}
     ${list.length?`<div class="dl">${list.map(d=>defectItem(d)).join('')}</div>`:c.total?`<p class="hint">Brak pozycji w tym filtrze.</p>`:`<div class="empty"><h3>Brak usterek</h3><p>Wpisz pierwszą usterkę przyciskiem na dole. Rodzaj i typowe usterki wybierasz z listy, zdjęcie robisz od razu telefonem.</p></div>`}
@@ -613,25 +654,27 @@ function viewUnit(){
 const short=s=>s.length>7?s.slice(0,6)+'…':s;
 
 function reportData(p){
-  const R=S.report,fl=floorsOf(p.id);
+  const R=S.report,fl=floorsOf(p.id),kl=klatkiOf(p.id);
   if(R.floor!=='all'&&!fl.some(f=>f.id===R.floor))R.floor='all';
+  if(R.klatka!=='all'&&!kl.includes(R.klatka))R.klatka='all';
+  const st=d=>R.status==='all'||(R.status==='open'?!d.done:d.done);
   let ds=defectsOfProject(p.id);
-  const byStatus=ds.filter(d=>R.status==='all'||(R.status==='open'?!d.done:d.done));
+  if(R.klatka!=='all')ds=ds.filter(d=>unitKl(d.unitId)===R.klatka);
+  const byStatus=ds.filter(st);
   if(R.floor!=='all')ds=ds.filter(d=>d.floorId===R.floor);
-  const forChips=ds.filter(d=>R.status==='all'||(R.status==='open'?!d.done:d.done));
+  const forChips=ds.filter(st);
   if(R.cat!=='all')ds=ds.filter(d=>d.cat===R.cat);
   const summary=ds;
-  let rows=ds.filter(d=>R.status==='all'||(R.status==='open'?!d.done:d.done));
-  const fo=new Map(fl.map((f,i)=>[f.id,i])),uo=new Map();let n=0;for(const f of fl)for(const u of unitsOf(f.id))uo.set(u.id,n++);
-  rows=[...rows].sort((a,b)=>((fo.get(a.floorId)??0)-(fo.get(b.floorId)??0))||((uo.get(a.unitId)??0)-(uo.get(b.unitId)??0))||((a.createdAt||0)-(b.createdAt||0)));
-  return {fl,rows,byStatus,forChips,summary};
+  const fo=new Map(fl.map((f,i)=>[f.id,i])),U=Store.data.units;
+  const rows=ds.filter(st).sort((a,b)=>{const ua=U.get(a.unitId)||{},ub=U.get(b.unitId)||{};return ((fo.get(a.floorId)??0)-(fo.get(b.floorId)??0))||(kl.indexOf(ua.klatka||'')-kl.indexOf(ub.klatka||''))||((ua.order||0)-(ub.order||0))||cmp(ua.name,ub.name)||((a.createdAt||0)-(b.createdAt||0))});
+  return {fl,kl,rows,byStatus,forChips,summary};
 }
 function filterDesc(){
-  const R=S.report;return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||'')};
+  const R=S.report;return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka)};
 }
 function viewReport(){
   const p=Store.data.projects.get(S.projectId);if(!p){S.view='home';return viewHome()}
-  const R=S.report,{fl,rows,byStatus,forChips}=reportData(p);
+  const R=S.report,{fl,kl,rows,byStatus,forChips}=reportData(p);
   const all=defectsOfProject(p.id);const usedCats=CATS.filter(k=>all.some(d=>d.cat===k.id));
   const chipN=id=>forChips.filter(d=>id==='all'||d.cat===id).length;
   const chips=[`<button class="chip" data-act="rcat" data-cat="all" aria-pressed="${R.cat==='all'}">Wszystkie<span class="n ${chipN('all')?'':'z'}">${chipN('all')}</span></button>`].concat(usedCats.map(k=>`<button class="chip" data-act="rcat" data-cat="${k.id}" aria-pressed="${R.cat===k.id}">${ic(k.ic)}${k.name}<span class="n ${chipN(k.id)?'':'z'}">${chipN(k.id)}</span></button>`)).join('');
@@ -648,7 +691,7 @@ function viewReport(){
   const perFloor=new Map();for(const d of rows)perFloor.set(d.floorId,(perFloor.get(d.floorId)||0)+1);
   for(const d of rows){
     if(d.floorId!==cf){cf=d.floorId;cu=null;const f=Store.data.floors.get(cf);const n=perFloor.get(cf);list+=`<div class="rg-f">${esc(f?f.name:'')}<span>${n} ${plural(n,'pozycja','pozycje','pozycji')}</span></div>`}
-    if(d.unitId!==cu){cu=d.unitId;const u=Store.data.units.get(cu);list+=`<div class="rg-u"><button data-act="open-unit" data-id="${cu}">${esc(u?u.name:'')}</button></div>`}
+    if(d.unitId!==cu){cu=d.unitId;const u=Store.data.units.get(cu)||{};list+=`<div class="rg-u"><button data-act="open-unit" data-id="${cu}">${esc(u.name||'')}</button>${u.klatka?`<span>${esc(kLabel(u.klatka))}</span>`:''}</div>`}
     list+=defectItem(d,true);
   }
   const fd=filterDesc();
@@ -659,9 +702,9 @@ function viewReport(){
     <section class="sec"><div class="sh"><h2>Filtr</h2></div>
       <div class="seg" role="group" aria-label="Status">${seg}</div>
       <div class="chips">${chips}</div>
-      <label class="vh" for="r-floor">Kondygnacja</label><select class="inp" id="r-floor" data-act="rfloor">${flOpts}</select>
+      <div class="${kl.length?'grid2':''}">${kl.length?`<div><label class="vh" for="r-kl">Klatka</label><select class="inp" id="r-kl"><option value="all">Wszystkie klatki</option>${kl.map(k=>`<option value="${esc(k)}" ${R.klatka===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select></div>`:''}<div><label class="vh" for="r-floor">Kondygnacja</label><select class="inp" id="r-floor">${flOpts}</select></div></div>
     </section>
-    <section class="sec"><div class="sh"><h2>${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')} · ${esc(fd.cat)}</h2></div>
+    <section class="sec"><div class="sh"><h2>${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')} · ${esc(fd.cat)}${fd.klatka?' · '+esc(fd.klatka):''}</h2></div>
       ${rows.length?`<div class="dl">${list}</div>`:`<p class="hint">Brak usterek dla wybranego filtra.</p>`}
       <label class="checkline"><input type="checkbox" id="r-photos" data-act="rphotos" ${R.photos?'checked':''}>Dołącz zdjęcia do PDF</label>
     </section>
@@ -775,24 +818,27 @@ function openDefectForm(unitId,defectId){
 function genFields(){return `
   <div class="grid2"><div class="fld"><label for="g-below">Kondygnacje podziemne</label><input class="inp" id="g-below" type="number" inputmode="numeric" min="0" max="5" value="0"></div>
   <div class="fld"><label for="g-above">Nadziemne (z parterem)</label><input class="inp" id="g-above" type="number" inputmode="numeric" min="1" max="40" value="4"></div></div>
-  <div class="grid2"><div class="fld"><label for="g-per">Mieszkań na kondygnacji</label><input class="inp" id="g-per" type="number" inputmode="numeric" min="0" max="40" value="4"></div>
-  <div class="fld"><label for="g-prefix">Oznaczenie</label><input class="inp" id="g-prefix" value="M" maxlength="6"></div></div>
-  <div class="fld"><label for="g-num">Numeracja</label><select class="inp" id="g-num"><option value="cont">Ciągła: M1, M2, M3…</option><option value="floor">Z piętrem: M1.1, M1.2, M2.1…</option></select></div>
+  <div class="grid2"><div class="fld"><label for="g-kl">Liczba klatek</label><input class="inp" id="g-kl" type="number" inputmode="numeric" min="1" max="8" value="1"></div>
+  <div class="fld"><label for="g-per">Mieszkań na piętrze w klatce</label><input class="inp" id="g-per" type="number" inputmode="numeric" min="0" max="40" value="4"></div></div>
+  <div class="grid2"><div class="fld"><label for="g-prefix">Oznaczenie</label><input class="inp" id="g-prefix" value="M" maxlength="6"></div>
+  <div class="fld"><label for="g-num">Numeracja</label><select class="inp" id="g-num"><option value="cont">Ciągła (M1, M2…)</option><option value="floor">Z piętrem (M1.1…)</option></select></div></div>
   <label class="checkline"><input type="checkbox" id="g-common" checked>Klatka schodowa na każdej kondygnacji</label>
   <p class="preview" id="g-prev"></p>`}
-function genRead(el){const n=(s,min,max,d)=>{const v=parseInt(el.querySelector(s).value,10);return isNaN(v)?d:Math.max(min,Math.min(max,v))};return {below:n('#g-below',0,5,0),above:n('#g-above',1,40,4),per:n('#g-per',0,40,4),prefix:el.querySelector('#g-prefix').value.trim(),num:el.querySelector('#g-num').value,common:el.querySelector('#g-common').checked}}
+function genRead(el){const n=(s,min,max,d)=>{const v=parseInt(el.querySelector(s).value,10);return isNaN(v)?d:Math.max(min,Math.min(max,v))};return {below:n('#g-below',0,5,0),above:n('#g-above',1,40,4),kl:n('#g-kl',1,8,1),per:n('#g-per',0,40,4),prefix:el.querySelector('#g-prefix').value.trim(),num:el.querySelector('#g-num').value,common:el.querySelector('#g-common').checked}}
 function genBuild(pid,o){
-  const items=[],now=Date.now();let n=1,first='',last='',flats=0;
-  for(let l=-o.below;l<o.above;l++){
-    const fid=uid();items.push(['floors',{id:fid,projectId:pid,name:floorAutoName(l),level:l,createdAt:now}]);
-    let ord=0;const addU=(name,kind)=>items.push(['units',{id:uid(),projectId:pid,floorId:fid,name,kind,order:ord++,createdAt:now}]);
-    if(l<0)addU('Garaż','common');
-    else for(let i=1;i<=o.per;i++){const nm=o.num==='floor'?`${o.prefix}${l}.${i}`:`${o.prefix}${n++}`;if(!first)first=nm;last=nm;flats++;addU(nm,'flat')}
-    if(o.common)addU('Klatka schodowa','common');
+  const items=[],now=Date.now(),K=o.kl||1,letters='ABCDEFGH'.slice(0,K).split(''),kls=K>1?letters:[''];
+  let n=1,first='',last='',flats=0;const fids={},ord={};
+  for(let l=-o.below;l<o.above;l++){const fid=uid();fids[l]=fid;items.push(['floors',{id:fid,projectId:pid,name:floorAutoName(l),level:l,createdAt:now}])}
+  const addU=(l,name,kind,k)=>{ord[l]=ord[l]||0;items.push(['units',{id:uid(),projectId:pid,floorId:fids[l],name,kind,klatka:k,order:ord[l]++,createdAt:now}])};
+  for(let l=-o.below;l<0;l++){addU(l,'Garaż','common','');if(o.common&&K===1)addU(l,'Klatka schodowa','common','')}
+  // numbering runs klatka by klatka, floor by floor (A: M1–M16, B: M17–M32…)
+  for(const k of kls)for(let l=0;l<o.above;l++){
+    for(let i=1;i<=o.per;i++){const nm=o.num==='floor'?`${o.prefix}${l}.${i}`:`${o.prefix}${n++}`;if(!first)first=nm;last=nm;flats++;addU(l,nm,'flat',k)}
+    if(o.common)addU(l,'Klatka schodowa','common',k);
   }
-  return {items,first,last,flats,floors:o.below+o.above};
+  return {items,first,last,flats,floors:o.below+o.above,klatki:K>1?letters:[]};
 }
-function genPreview(el){const o=genRead(el);const g=genBuild('x',o);el.querySelector('#g-prev').textContent=`Powstanie ${g.floors} ${plural(g.floors,'kondygnacja','kondygnacje','kondygnacji')} i ${g.flats} ${plural(g.flats,'mieszkanie','mieszkania','mieszkań')}${g.flats?`: ${g.first} – ${g.last}`:''}.`}
+function genPreview(el){const o=genRead(el);const g=genBuild('x',o);el.querySelector('#g-prev').textContent=`Powstanie ${g.floors} ${plural(g.floors,'kondygnacja','kondygnacje','kondygnacji')}${g.klatki.length?`, ${g.klatki.length} ${plural(g.klatki.length,'klatka','klatki','klatek')} (${g.klatki.join(', ')})`:''} i ${g.flats} ${plural(g.flats,'mieszkanie','mieszkania','mieszkań')}${g.flats?`: ${g.first} – ${g.last}`:''}.`}
 
 function openProjectForm(pid){
   const p=pid?Store.data.projects.get(pid):null;
@@ -801,7 +847,7 @@ function openProjectForm(pid){
   <div class="sh-b gut">
     <div class="fld"><label for="p-name">Nazwa</label><input class="inp" id="p-name" placeholder="np. Osiedle Słoneczne, budynek A" value="${esc(p?p.name:'')}"></div>
     <div class="fld"><label for="p-addr">Adres / opis</label><input class="inp" id="p-addr" placeholder="np. ul. Polna 5, Gdańsk" value="${esc(p?p.address||'':'')}"></div>
-    ${p?'':`<label class="checkline"><input type="checkbox" id="p-gen" checked>Od razu utwórz kondygnacje i mieszkania</label><div id="p-genbox" class="sec">${genFields()}</div>`}
+    ${p?`<div class="fld"><label for="p-kl">Klatki</label><input class="inp" id="p-kl" placeholder="np. A, B, C" value="${esc(klatkiOf(p.id).join(', '))}"><p class="hint">Oddziel przecinkami. Zostaw puste, jeśli budynek ma jedną klatkę. Lokal przypiszesz do klatki w jego ustawieniach (⋯).</p></div>`:`<label class="checkline"><input type="checkbox" id="p-gen" checked>Od razu utwórz kondygnacje i mieszkania</label><div id="p-genbox" class="sec">${genFields()}</div>`}
     <p class="err" id="p-err" hidden></p>
     ${p?`<button type="button" class="btn danger" id="p-del">${ic(UI.trash)}Usuń budowę</button><p class="hint">Usunięcie skasuje: ${esc(cnt)} razem ze zdjęciami.</p>`:''}
   </div>
@@ -812,9 +858,9 @@ function openProjectForm(pid){
     q('#p-save').addEventListener('click',()=>{
       const name=q('#p-name').value.trim(),address=q('#p-addr').value.trim();
       if(!name){const e=q('#p-err');e.textContent='Wpisz nazwę budowy.';e.hidden=false;q('#p-name').focus();return}
-      if(p){persist('projects',Object.assign({},p,{name,address,updatedAt:Date.now()}));closeSheet();toast('Zapisano');return}
-      const id=uid();const items=[['projects',{id,name,address,createdAt:Date.now()}]];
-      if(q('#p-gen').checked)items.push(...genBuild(id,genRead(el)).items);
+      if(p){persist('projects',Object.assign({},p,{name,address,klatki:parseKlatki(q('#p-kl').value),updatedAt:Date.now()}));closeSheet();toast('Zapisano');return}
+      const id=uid();const proj={id,name,address,klatki:[],createdAt:Date.now()};const items=[['projects',proj]];
+      if(q('#p-gen').checked){const g=genBuild(id,genRead(el));proj.klatki=g.klatki;items.push(...g.items)}
       persistMany(items);closeSheet();go('project',{projectId:id});
     });
     if(p)armDelete(q('#p-del'),'Dotknij ponownie – usuń na stałe',()=>{deleteProject(p);closeSheet();stack.length=0;S.view='home';render();toast('Usunięto budowę')});
@@ -822,18 +868,23 @@ function openProjectForm(pid){
 }
 function openGenerator(pid){
   const html=`${sheetHead('Generator kondygnacji')}<div class="sh-b gut">${genFields()}</div><div class="sh-f gut"><button class="btn pri grow" id="g-go">${ic(UI.check)}Utwórz</button></div>`;
-  openSheet(html,{full:true,onMount:el=>{genPreview(el);el.addEventListener('input',()=>genPreview(el));el.querySelector('#g-go').addEventListener('click',()=>{persistMany(genBuild(pid,genRead(el)).items);closeSheet();toast('Utworzono kondygnacje')})}});
+  openSheet(html,{full:true,onMount:el=>{genPreview(el);el.addEventListener('input',()=>genPreview(el));el.querySelector('#g-go').addEventListener('click',()=>{
+    const g=genBuild(pid,genRead(el)),p=Store.data.projects.get(pid),items=[...g.items];
+    if(p&&g.klatki.length)items.push(['projects',Object.assign({},p,{klatki:[...new Set([...(p.klatki||[]),...g.klatki])]})]);
+    persistMany(items);closeSheet();toast('Utworzono kondygnacje')})}});
 }
+function klSelect(id,pid,cur){const kl=klatkiOf(pid);if(!kl.length)return '';return `<select class="inp" id="${id}" aria-label="Klatka"><option value="">Bez klatki (cały budynek)</option>${kl.map(k=>`<option value="${esc(k)}" ${cur===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select>`}
 function openFloorForm(pid,fid){
   const f=fid?Store.data.floors.get(fid):null;const fl=floorsOf(pid);
   const lvl=f?f.level:(fl.length?Math.max(...fl.map(x=>x.level))+1:0);
   const us=f?unitsOf(f.id):[];const nd=us.reduce((a,u)=>a+defectsOfUnit(u.id).length,0);
+  const kl=klatkiOf(pid),sk=selKlatka(pid),defK=sk!=='all'?sk:(kl[0]||'');
   const html=`${sheetHead(f?'Kondygnacja':'Nowa kondygnacja',f?lvlCode(f.level):'')}
   <div class="sh-b gut">
     <div class="grid2"><div class="fld"><label for="fl-level">Poziom</label><input class="inp" id="fl-level" type="number" inputmode="numeric" value="${lvl}"></div>
     <div class="fld"><label for="fl-name">Nazwa</label><input class="inp" id="fl-name" value="${esc(f?f.name:floorAutoName(lvl))}"></div></div>
     <p class="hint">Poziom: 0 = parter, 1 = pierwsze piętro, −1 = garaż podziemny.</p>
-    ${f?`<div class="fld"><span class="lbl">Dodaj lokal na tej kondygnacji</span><div class="row"><input class="inp" id="fl-unit" style="flex:1;min-width:0" value="${esc(nextUnitName(pid))}" aria-label="Nazwa lokalu"><button class="btn" id="fl-add-flat">Mieszkanie</button><button class="btn" id="fl-add-com">Część wspólna</button></div></div>
+    ${f?`<div class="fld"><span class="lbl">Dodaj lokal na tej kondygnacji</span><div class="${kl.length?'grid2':''}"><input class="inp" id="fl-unit" value="${esc(nextUnitName(pid))}" aria-label="Nazwa lokalu">${klSelect('fl-kl',pid,defK)}</div><div class="row"><button class="btn" id="fl-add-flat">${ic(UI.plus)}Mieszkanie</button><button class="btn" id="fl-add-com">${ic(UI.plus)}Część wspólna</button></div></div>
     <button type="button" class="btn danger" id="fl-del">${ic(UI.trash)}Usuń kondygnację</button><p class="hint">Usunięcie skasuje ${us.length} ${plural(us.length,'lokal','lokale','lokali')} i ${nd} ${plural(nd,'usterkę','usterki','usterek')}.</p>`:''}
   </div>
   <div class="sh-f gut"><button class="btn pri grow" id="fl-save">${ic(UI.check)}${f?'Zapisz':'Dodaj kondygnację'}</button></div>`;
@@ -846,7 +897,7 @@ function openFloorForm(pid,fid){
       persist('floors',f?Object.assign({},f,{level,name}):{id:uid(),projectId:pid,level,name,createdAt:Date.now()});closeSheet();toast(f?'Zapisano':'Dodano kondygnację');
     });
     if(f){
-      const add=kind=>{const name=q('#fl-unit').value.trim();if(!name){toast('Wpisz nazwę lokalu.');return}const ord=unitsOf(f.id).reduce((m,u)=>Math.max(m,u.order||0),-1)+1;persist('units',{id:uid(),projectId:pid,floorId:f.id,name,kind,order:ord,createdAt:Date.now()});toast('Dodano: '+name);q('#fl-unit').value=nextUnitName(pid)};
+      const add=kind=>{const name=q('#fl-unit').value.trim();if(!name){toast('Wpisz nazwę lokalu.');return}const ks=q('#fl-kl'),klatka=ks?ks.value:'';const ord=unitsOf(f.id).reduce((m,u)=>Math.max(m,u.order||0),-1)+1;persist('units',{id:uid(),projectId:pid,floorId:f.id,name,kind,klatka,order:ord,createdAt:Date.now()});toast('Dodano: '+name+(klatka?' ('+kLabel(klatka)+')':''));q('#fl-unit').value=nextUnitName(pid)};
       q('#fl-add-flat').addEventListener('click',()=>add('flat'));q('#fl-add-com').addEventListener('click',()=>add('common'));
       armDelete(q('#fl-del'),'Dotknij ponownie, aby usunąć',()=>{deleteFloor(f);closeSheet();toast('Usunięto kondygnację')});
     }
@@ -859,10 +910,13 @@ function nextUnitName(pid){
 function openUnitForm(uid_,floorId){
   const u=uid_?Store.data.units.get(uid_):null;const f=Store.data.floors.get(u?u.floorId:floorId);if(!f)return;
   const nd=u?defectsOfUnit(u.id).length:0;let kind=u?u.kind||'flat':'flat';
+  const sk=selKlatka(f.projectId),curK=u?u.klatka||'':(sk!=='all'?sk:(klatkiOf(f.projectId)[0]||''));
+  const ksel=klSelect('u-kl',f.projectId,curK);
   const html=`${sheetHead(u?'Lokal':'Nowy lokal',f.name)}
   <div class="sh-b gut">
     <div class="fld"><label for="u-name">Nazwa / numer</label><input class="inp" id="u-name" value="${esc(u?u.name:nextUnitName(f.projectId))}"></div>
     <div class="seg" role="group" aria-label="Rodzaj lokalu"><button data-k="flat">Mieszkanie</button><button data-k="common">Część wspólna</button></div>
+    ${ksel?`<div class="fld"><label for="u-kl">Klatka</label>${ksel}</div>`:''}
     ${u?`<button type="button" class="btn danger" id="u-del">${ic(UI.trash)}Usuń lokal</button><p class="hint">Usunięcie skasuje ${nd} ${plural(nd,'usterkę','usterki','usterek')} tego lokalu.</p>`:''}
   </div>
   <div class="sh-f gut"><button class="btn pri grow" id="u-save">${ic(UI.check)}${u?'Zapisz':'Dodaj lokal'}</button></div>`;
@@ -870,7 +924,8 @@ function openUnitForm(uid_,floorId){
     const q=s=>el.querySelector(s);const paint=()=>$$('.seg button',el).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===kind)));paint();
     $$('.seg button',el).forEach(b=>b.addEventListener('click',()=>{kind=b.dataset.k;paint()}));
     q('#u-save').addEventListener('click',()=>{const name=q('#u-name').value.trim();if(!name){toast('Wpisz nazwę lokalu.');return}
-      if(u)persist('units',Object.assign({},u,{name,kind}));else{const ord=unitsOf(f.id).reduce((m,x)=>Math.max(m,x.order||0),-1)+1;persist('units',{id:uid(),projectId:f.projectId,floorId:f.id,name,kind,order:ord,createdAt:Date.now()})}
+      const ks=q('#u-kl'),klatka=ks?ks.value:(u?u.klatka||'':'');
+      if(u)persist('units',Object.assign({},u,{name,kind,klatka}));else{const ord=unitsOf(f.id).reduce((m,x)=>Math.max(m,x.order||0),-1)+1;persist('units',{id:uid(),projectId:f.projectId,floorId:f.id,name,kind,klatka,order:ord,createdAt:Date.now()})}
       closeSheet();toast(u?'Zapisano':'Dodano lokal')});
     if(u)armDelete(q('#u-del'),'Dotknij ponownie, aby usunąć',()=>{deleteUnit(u);closeSheet();if(S.view==='unit')back();toast('Usunięto lokal')});
   }});
@@ -907,19 +962,19 @@ async function offerFile(name,blob){
   }});
 }
 function reportText(p,rows){
-  const fd=filterDesc();const L=[`PROTOKÓŁ USTEREK – ${p.name}`,`${fd.cat} · ${fd.status} · ${fd.floor}`,`Stan na ${fmtDate(Date.now())}: ${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')}`];
+  const fd=filterDesc();const L=[`PROTOKÓŁ USTEREK – ${p.name}`,fdLine(fd),`Stan na ${fmtDate(Date.now())}: ${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')}`];
   let cf=null,cu=null,lp=0;
   for(const d of rows){
     if(d.floorId!==cf){cf=d.floorId;cu=null;L.push('',((Store.data.floors.get(cf)||{}).name||'').toUpperCase())}
-    if(d.unitId!==cu){cu=d.unitId;L.push(((Store.data.units.get(cu)||{}).name||'')+':')}
+    if(d.unitId!==cu){cu=d.unitId;const u=Store.data.units.get(cu)||{};L.push((u.name||'')+(u.klatka?` (kl. ${u.klatka})`:'')+':')}
     L.push(`${d.done?'☑':'☐'} ${++lp}. ${d.room?d.room+' – ':''}${d.title}${d.note?' ('+d.note+')':''}${S.report.cat==='all'?' ['+(CAT[d.cat]||CAT.inne).name+']':''}`);
   }
   return L.join('\n');
 }
 function reportCsv(rows){
   const q=v=>{const s=String(v??'');return /[";\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
-  const H=['Lp.','Kondygnacja','Lokal','Pomieszczenie','Rodzaj','Usterka','Uwagi','Status','Data wpisu','Data poprawy','Zdjęcia'];
-  const R=rows.map((d,i)=>[i+1,(Store.data.floors.get(d.floorId)||{}).name||'',(Store.data.units.get(d.unitId)||{}).name||'',d.room||'',(CAT[d.cat]||CAT.inne).name,d.title,d.note||'',d.done?'poprawione':'do poprawy',fmtDate(d.createdAt),d.done?fmtDate(d.doneAt):'',(d.photos||[]).length]);
+  const H=['Lp.','Kondygnacja','Klatka','Lokal','Pomieszczenie','Rodzaj','Usterka','Uwagi','Status','Data wpisu','Data poprawy','Zdjęcia'];
+  const R=rows.map((d,i)=>{const u=Store.data.units.get(d.unitId)||{};return [i+1,(Store.data.floors.get(d.floorId)||{}).name||'',u.klatka||'',u.name||'',d.room||'',(CAT[d.cat]||CAT.inne).name,d.title,d.note||'',d.done?'poprawione':'do poprawy',fmtDate(d.createdAt),d.done?fmtDate(d.doneAt):'',(d.photos||[]).length]});
   return '﻿'+[H,...R].map(r=>r.map(q).join(';')).join('\r\n');
 }
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Nie wczytano '+src));(document.head||document.body).appendChild(s)})}
@@ -933,7 +988,8 @@ async function makePdf(p,rows,summary,withPhotos){
   const box=done=>({canvas:[{type:'rect',x:0,y:0,w:9,h:9,r:1,lineWidth:.8,lineColor:'#333333'}].concat(done?[{type:'polyline',points:[{x:1.8,y:4.6},{x:3.9,y:7},{x:7.6,y:1.9}],lineWidth:1.4,lineColor:green}]:[]),margin:[0,1.5,0,0]});
   const content=[{text:'PROTOKÓŁ USTEREK',style:'h1'},{text:p.name,style:'h2'}];
   if(p.address)content.push({text:p.address,color:gray,margin:[0,0,0,6]});
-  content.push({table:{widths:[95,'*'],body:[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status],['Kondygnacje',fd.floor],['Liczba pozycji',String(rows.length)]].map(r=>[{text:r[0],color:gray},{text:r[1],bold:true}])},layout:'noBorders',margin:[0,6,0,10]});
+  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor],['Liczba pozycji',String(rows.length)]);
+  content.push({table:{widths:[95,'*'],body:meta.map(r=>[{text:r[0],color:gray},{text:r[1],bold:true}])},layout:'noBorders',margin:[0,6,0,10]});
   const sc=CATS.map(k=>{const a=summary.filter(d=>d.cat===k.id);return [k.name,a.filter(d=>!d.done).length,a.filter(d=>d.done).length,a.length]}).filter(r=>r[3]);
   if(sc.length){
     const tot=sc.reduce((t,r)=>[t[0],t[1]+r[1],t[2]+r[2],t[3]+r[3]],['Razem',0,0,0]);
@@ -945,7 +1001,7 @@ async function makePdf(p,rows,summary,withPhotos){
   const flush=()=>{if(body&&body.length>1)content.push({table:{headerRows:1,dontBreakRows:true,widths:[10,18,70,62,'*'],body},layout:tl,margin:[0,0,0,8]});body=null};
   for(const d of rows){
     if(d.floorId!==cf){flush();cf=d.floorId;cu=null;content.push({text:((Store.data.floors.get(cf)||{}).name||'').toUpperCase(),style:'floor',headlineLevel:1})}
-    if(d.unitId!==cu){flush();cu=d.unitId;content.push({text:(Store.data.units.get(cu)||{}).name||'',style:'unit',headlineLevel:1});body=[['','Lp.','Pomieszczenie','Rodzaj','Usterka / uwagi'].map(t=>({text:t,style:'th'}))]}
+    if(d.unitId!==cu){flush();cu=d.unitId;{const u=Store.data.units.get(cu)||{};content.push({text:[u.name||'',u.klatka?{text:'   klatka '+u.klatka,fontSize:9,bold:false,color:gray}:''],style:'unit',headlineLevel:1})}body=[['','Lp.','Pomieszczenie','Rodzaj','Usterka / uwagi'].map(t=>({text:t,style:'th'}))]}
     lp++;
     const desc=[{text:d.title,bold:true,color:d.done?gray:'#111111'}];
     if(d.note)desc.push({text:d.note,color:'#333333',margin:[0,1,0,0]});
@@ -963,7 +1019,7 @@ async function makePdf(p,rows,summary,withPhotos){
     styles:{h1:{fontSize:17,bold:true,characterSpacing:1},h2:{fontSize:12.5,bold:true,margin:[0,2,0,1]},th:{fontSize:7.5,color:gray,bold:true},floor:{fontSize:10.5,bold:true,characterSpacing:1,margin:[0,10,0,2]},unit:{fontSize:11.5,bold:true,margin:[0,4,0,3]}},
     pageBreakBefore:(cur,next)=>cur.headlineLevel===1&&next.length===0,
     header:cur=>cur>1?{text:'Protokół usterek · '+p.name,fontSize:7.5,color:gray,margin:[36,18,36,0]}:null,
-    footer:(cur,cnt)=>({columns:[{text:`${fd.cat} · ${fd.status} · ${fmtDate(Date.now())}`,fontSize:7.5,color:gray},{text:`Strona ${cur} z ${cnt}`,alignment:'right',fontSize:7.5,color:gray}],margin:[36,14,36,0]})};
+    footer:(cur,cnt)=>({columns:[{text:`${fdLine(fd)} · ${fmtDate(Date.now())}`,fontSize:7.5,color:gray},{text:`Strona ${cur} z ${cnt}`,alignment:'right',fontSize:7.5,color:gray}],margin:[36,14,36,0]})};
   return await new Promise((res,rej)=>{try{pdfMake.createPdf(dd).getBlob(b=>res(b))}catch(e){rej(e)}});
 }
 async function exportBackup(){
@@ -1038,8 +1094,9 @@ document.addEventListener('click',async e=>{
     case 'edit-defect':{const d=Store.data.defects.get(id);if(d)openDefectForm(d.unitId,id);break}
     case 'toggle':{const d=Store.data.defects.get(id);if(!d)break;const done=!d.done;persist('defects',Object.assign({},d,{done,doneAt:done?Date.now():null,updatedAt:Date.now()}));toast(done?'Poprawione ✓':'Wróciło do poprawy');break}
     case 'photo':{const d=Store.data.defects.get(id);if(d)openLightbox(d.photos||[],+t.dataset.i);break}
-    case 'report':go('report');break;
-    case 'report-cat':S.report.cat=t.dataset.cat;S.report.status='open';S.report.floor='all';go('report');break;
+    case 'report':S.report.klatka=selKlatka(S.projectId);go('report');break;
+    case 'kl':S.kl.set(S.projectId,t.dataset.k);render();break;
+    case 'report-cat':S.report.cat=t.dataset.cat;S.report.status='open';S.report.floor='all';S.report.klatka=selKlatka(S.projectId);go('report');break;
     case 'rcat':S.report.cat=t.dataset.cat;render();break;
     case 'rcat-toggle':S.report.cat=S.report.cat===t.dataset.cat?'all':t.dataset.cat;render();break;
     case 'rstatus':S.report.status=t.dataset.s;render();break;
@@ -1055,6 +1112,7 @@ document.addEventListener('click',async e=>{
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='r-floor'){S.report.floor=t.value;render()}
+  else if(t.id==='r-kl'){S.report.klatka=t.value;render()}
   else if(t.id==='restore-file'&&t.files&&t.files[0]){importBackup(t.files[0]);t.value=''}
 });
 
