@@ -6,94 +6,134 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Śmieci">
-<meta name="theme-color" content="#2e9e63">
+<meta name="theme-color" content="#f6f6f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111213" media="(prefers-color-scheme: dark)">
 <title>Wywóz śmieci 2026</title>
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#e9f3ee;--card:#fff;--text:#1d2a24;--muted:#5f6f67;--line:#d7e4dc;--accent:#2e9e63;--hotbg:#fff0b8;--hotline:#e0a800;
---M:#7b8794;--P:#f2c230;--S:#2e9e63;--B:#8b5a2b;--K:#2f7fd0;--W:#d84a4a;--T:#9a5bbd}
-@media (prefers-color-scheme:dark){:root{--bg:#10171a;--card:#1a2428;--text:#e8f0ec;--muted:#97a9a0;--line:#2a373c;--hotbg:#3d3410;--hotline:#e8b923}}
+:root{--bg:#f6f6f3;--fg:#111;--mute:#74746d;--line:#dcdcd6;--inv:#111;--invfg:#f6f6f3;
+--M:#8a8f94;--P:#e8b422;--S:#2f7352;--B:#7b5a3c;--K:#2a5ca8;--W:#c93f2e;--T:#7e5199}
+@media (prefers-color-scheme:dark){:root{--bg:#111213;--fg:#f2f2ee;--mute:#8e8e87;--line:#2c2d2f;--inv:#f2f2ee;--invfg:#111}}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:17px/1.45 "Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
+body{background:var(--bg);color:var(--fg);font:400 18px/1.5 "Jost",system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.005em;
 padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-main{max-width:1000px;margin:0 auto;padding:18px 16px 48px}
-.layout{display:grid;gap:0 24px;grid-template-columns:1fr;grid-template-areas:"hero" "month" "next"}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 24px 72px}
+header h1{font-size:1.15rem;font-weight:500;letter-spacing:.01em;margin:0}
+header p{margin:2px 0 0;color:var(--mute);font-size:.88rem}
+nav{display:flex;gap:26px;margin-top:22px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav a{padding:12px 0;color:var(--mute);text-decoration:none;font-size:.95rem;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+nav a[aria-current="page"]{color:var(--fg);border-color:var(--fg)}
+nav a:focus-visible,a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+[hidden]{display:none!important}
+.layout{display:grid;grid-template-columns:1fr;grid-template-areas:"hero" "month" "next";column-gap:64px}
 .a-hero{grid-area:hero}.a-month{grid-area:month}.a-next{grid-area:next}
-@media (min-width:860px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-areas:"hero month" "next month"}.a-month{align-self:start;position:sticky;top:16px}}
-.mcard{background:var(--card);border-radius:24px;box-shadow:0 6px 24px rgba(20,60,40,.12);padding:12px 8px 6px;margin-bottom:26px}
-.mhead{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px}
-.mhead h2{margin:0;font-size:1.25rem}
-.mhead button{width:44px;height:44px;border:0;border-radius:50%;background:rgba(46,158,99,.14);color:var(--text);font-family:inherit;font-weight:900;font-size:1.8rem;line-height:1;cursor:pointer}
-.mhead button:focus-visible{outline:3px solid var(--accent)}
-.mhead .tod{font-size:.8rem;font-weight:700;color:var(--accent);background:none;width:auto;height:auto;border-radius:8px;padding:4px 8px;margin-left:6px}
-.mcard .cal .c{min-height:58px}
-@media (min-width:860px){.mcard .cal .c{min-height:72px;font-size:.95rem}.mcard .cal .c i{font-size:1.25rem}}
-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-header .logo{font-size:2.4rem;line-height:1}
-h1{font-size:1.45rem;margin:0;font-weight:900}
-.sub{margin:0;color:var(--muted);font-size:.85rem}
-.hero{background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 6px 24px rgba(20,60,40,.12);margin-bottom:26px}
-.hero.hot{background:var(--hotbg);outline:3px solid var(--hotline)}
-.hero-top{padding:20px 20px 4px}
-.when{font-size:1.05rem;font-weight:700;color:var(--muted);margin:0}
-.big{font-size:2.5rem;font-weight:900;line-height:1.1;margin:2px 0 4px}
-.date{font-size:1.15rem;font-weight:700;margin:0}
-.alert{margin:10px 0 0;font-weight:900;font-size:1.05rem}
-.bins{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;padding:14px 12px 4px}
-.bin{display:flex;flex-direction:column;align-items:center;width:92px;text-align:center}
-.bin svg{width:72px;height:88px;filter:drop-shadow(0 4px 4px rgba(0,0,0,.18))}
-.bin span{font-size:.82rem;font-weight:700;line-height:1.15;margin-top:4px}
-.hero-foot{margin:0;padding:10px 20px 18px;color:var(--muted);font-size:.85rem;text-align:center}
-h2{font-size:1.15rem;font-weight:900;margin:28px 0 10px}
-.next{display:flex;flex-direction:column;gap:8px}
-.item{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:10px 14px;box-shadow:0 2px 8px rgba(20,60,40,.07)}
-.item .dd{min-width:62px;text-align:center;line-height:1.1}
-.item .dd b{display:block;font-size:1.5rem;font-weight:900}
-.item .dd small{color:var(--muted);font-size:.78rem;font-weight:700}
-.item .em{font-size:1.7rem;letter-spacing:2px}
-.item .nm{font-size:.92rem;font-weight:700}
-details{background:var(--card);border-radius:16px;margin-bottom:8px;box-shadow:0 2px 8px rgba(20,60,40,.07)}
-summary{cursor:pointer;padding:13px 16px;font-weight:900;list-style:none;display:flex;justify-content:space-between}
+@media (min-width:880px){.layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-areas:"hero month" "next month"}.a-month{align-self:start}}
+.hero{padding:32px 0 36px;border-bottom:1px solid var(--line)}
+.hero.hot{background:var(--inv);color:var(--invfg);padding:32px 28px 36px;border-bottom:0;margin-top:20px}
+.hero.hot .lab{color:inherit;opacity:.7}
+.lab{font-size:.88rem;color:var(--mute)}
+.big{font-size:clamp(3.4rem,13vw,5.6rem);font-weight:300;letter-spacing:-.04em;line-height:1;margin:.12em 0 .14em}
+.date{font-size:1.25rem;margin:0}
+.alert{margin:14px 0 0;font-weight:500}
+.bins{display:flex;flex-wrap:wrap;gap:30px;margin-top:30px}
+.bin{width:92px}
+.bin svg{display:block;width:52px;height:66px}
+.bin span{display:block;font-size:.82rem;line-height:1.25;margin-top:10px}
+h2{font-size:1.05rem;font-weight:500;margin:0}
+.sec{padding-top:36px}
+.sec>h2{margin-bottom:6px}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.row .d b{display:block;font-size:1.35rem;font-weight:400;line-height:1.1}
+.row .d small{color:var(--mute);font-size:.82rem}
+.row .n{font-size:.98rem}
+.sh{display:inline-block;width:12px;height:12px;background:var(--c);vertical-align:middle;margin-left:7px}
+.sh-circle{border-radius:50%}
+.sh-tri{clip-path:polygon(50% 0,100% 100%,0 100%)}
+.sh-semi{height:6px;border-radius:12px 12px 0 0;margin-bottom:-1px}
+.sh-dia{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.sh-cross{clip-path:polygon(34% 0,66% 0,66% 34%,100% 34%,100% 66%,66% 66%,66% 100%,34% 100%,34% 66%,0 66%,0 34%,34% 34%)}
+.sh-pill{width:16px;height:8px;border-radius:8px}
+.sh-sq{}
+.mhead{display:flex;align-items:center;justify-content:space-between;padding:36px 0 12px}
+.mhead h2{font-size:1.5rem;font-weight:300;letter-spacing:-.01em}
+.mhead .ctl{display:flex;align-items:center;gap:4px}
+.mhead button{border:0;background:none;color:var(--fg);font:300 1.6rem/1 "Jost",system-ui;width:44px;height:44px;cursor:pointer}
+.mhead .tod{font-size:.88rem;font-weight:400;width:auto;padding:0 10px;color:var(--mute)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal .h{font-size:.78rem;color:var(--mute);padding:6px 0 8px;text-align:left}
+.cal .c{min-height:66px;border-top:1px solid var(--line);padding:6px 4px 4px;font-size:.95rem;position:relative}
+.cal .c.past{color:var(--mute);opacity:.55}
+.cal .c.today .num{background:var(--inv);color:var(--invfg);border-radius:50%;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center}
+.cal .c.today{opacity:1}
+.cal .num{display:inline-flex;width:26px;height:26px;align-items:center;justify-content:flex-start}
+.cal .c.today .num{justify-content:center}
+.cal .c .sh{width:9px;height:9px;margin:0 4px 0 0}
+.cal .c .sh-semi{height:5px}.cal .c .sh-pill{width:13px;height:6px}
+.cal .c .dots{display:block;margin-top:4px;line-height:1}
+@media (min-width:880px){.cal .c{min-height:84px}}
+details{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;padding:16px 0;font-size:1rem}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"▾";color:var(--muted)}
-details[open] summary::after{content:"▴"}
-summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:16px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 10px 12px}
-.cal .h{text-align:center;font-size:.72rem;font-weight:900;color:var(--muted);padding:2px 0}
-.cal .c{min-height:50px;border-radius:10px;padding:3px 2px;text-align:center;font-size:.8rem;font-weight:700;background:rgba(127,150,140,.08)}
-.cal .c.on{background:rgba(46,158,99,.16)}
-.cal .c.today{outline:2px solid var(--accent)}
-.cal .c.past{opacity:.45}
-.cal .c i{display:block;font-style:normal;font-size:.95rem;line-height:1.05;margin-top:1px}
-.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 14px;font-size:.9rem;font-weight:700}
-.legend div{display:flex;align-items:center;gap:8px}
-.legend b{width:14px;height:14px;border-radius:50%;display:inline-block}
-.note{color:var(--muted);font-size:.85rem;margin-top:22px;text-align:center}
+summary::after{content:"+";color:var(--mute);font-size:1.3rem;line-height:1}
+details[open] summary::after{content:"–"}
+details .cal{padding-bottom:16px}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 32px;margin-top:14px;font-size:.95rem}
+.legend .sh{margin:0 12px 0 0}
+.note{color:var(--mute);font-size:.85rem;margin-top:36px}
+.page{max-width:620px;padding-top:36px}
+.page h2{font-size:1.6rem;font-weight:300;letter-spacing:-.01em;margin-bottom:12px}
+.page p{margin:0 0 22px;color:var(--mute)}
+.guide img{display:block;width:100%;height:auto;border:1px solid var(--line)}
+.btn{display:inline-block;background:var(--inv);color:var(--invfg);padding:14px 26px;text-decoration:none;font-weight:500;font-size:.98rem}
+.btn+.btn{margin-left:12px}
+.link{color:var(--fg);font-size:.95rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<main>
-<header><div class="logo">🏡</div><div><h1>Wywóz śmieci 2026</h1><p class="sub">Gmina Redzikowo · Krępa Słupska, Łupiny, Płaszewko, Kusowo</p></div></header>
+<div class="wrap">
+<header><h1>Wywóz śmieci 2026</h1><p>Gmina Redzikowo: Krępa Słupska, Łupiny, Płaszewko, Kusowo</p></header>
+<nav aria-label="Widoki">
+<a href="#terminarz" data-v="terminarz">Terminarz</a>
+<a href="#co-gdzie" data-v="co-gdzie" id="tab-guide" hidden>Co gdzie wrzucać</a>
+<a href="#gdzie" data-v="gdzie">Gdzie wyrzucić</a>
+</nav>
+
+<section id="v-terminarz">
 <div class="layout">
-<section class="a-hero" id="hero" aria-live="polite"></section>
-<section class="a-month"><div class="mcard" id="mcard"></div></section>
-<section class="a-next"><h2>Kolejne wywozy</h2>
-<div class="next" id="next"></div></section>
+<div class="a-hero" id="hero" aria-live="polite"></div>
+<div class="a-month" id="mcard"></div>
+<div class="a-next sec"><h2>Kolejne wywozy</h2><div id="next"></div></div>
 </div>
-<h2>Cały rok</h2>
-<div id="months"></div>
-<h2>Co jest czym</h2>
-<div class="legend" id="legend"></div>
-<p class="note">Pojemniki i worki wystaw w dniu wywozu do godz. 7:00 przed posesję. 🌅</p>
-</main>
+<div class="sec"><h2>Cały rok</h2><div id="months"></div></div>
+<div class="sec"><h2>Oznaczenia</h2><div class="legend" id="legend"></div></div>
+<p class="note">Pojemniki i worki wystaw w dniu wywozu do godz. 7:00 przed posesję.</p>
+</section>
+
+<section id="v-co-gdzie" class="page guide" hidden>
+<h2>Co gdzie wrzucać</h2>
+<p>Do którego pojemnika trafia dany odpad.</p>
+<a href="#" id="guide-link" target="_blank" rel="noopener"><img id="guide-img" alt="Ściąga: co wrzucać do którego pojemnika"></a>
+<p style="margin-top:14px"><a class="link" id="guide-open" href="#" target="_blank" rel="noopener">Otwórz zdjęcie w pełnym rozmiarze</a></p>
+</section>
+
+<section id="v-gdzie" class="page" hidden>
+<h2>Gdzie wyrzucić</h2>
+<p>Odpady, których nie ma w harmonogramie albo których nie wiadomo, gdzie oddać: sprzęt elektroniczny, baterie, farby, chemia, gruz.</p>
+<a class="btn" href="https://gdzietowyrzucic.pl/" target="_blank" rel="noopener">Otwórz gdzietowyrzucic.pl</a>
+</section>
+</div>
+
 <script>
 const D={"2026-01-07":"M","2026-01-10":"BK","2026-01-13":"PS","2026-01-20":"K","2026-01-21":"M","2026-01-27":"PS","2026-02-03":"BK","2026-02-04":"M","2026-02-10":"PS","2026-02-11":"T","2026-02-17":"BK","2026-02-18":"M","2026-02-24":"PS","2026-03-03":"BK","2026-03-04":"M","2026-03-10":"PS","2026-03-11":"W","2026-03-17":"BK","2026-03-18":"M","2026-03-24":"PS","2026-03-31":"BK","2026-04-01":"M","2026-04-07":"PS","2026-04-14":"BK","2026-04-15":"M","2026-04-21":"PS","2026-04-28":"BK","2026-04-29":"M","2026-05-05":"PS","2026-05-12":"BK","2026-05-13":"M","2026-05-19":"PS","2026-05-21":"T","2026-05-26":"BK","2026-05-27":"M","2026-06-02":"PS","2026-06-09":"BK","2026-06-10":"M","2026-06-16":"PS","2026-06-18":"W","2026-06-23":"BK","2026-06-24":"M","2026-06-30":"PS","2026-07-07":"BK","2026-07-08":"M","2026-07-14":"PS","2026-07-21":"BK","2026-07-22":"M","2026-07-28":"PS","2026-08-04":"BK","2026-08-05":"M","2026-08-11":"PS","2026-08-18":"BK","2026-08-19":"M","2026-08-20":"T","2026-08-25":"PS","2026-09-01":"BK","2026-09-02":"M","2026-09-08":"PS","2026-09-15":"BK","2026-09-16":"M","2026-09-17":"W","2026-09-22":"PS","2026-09-29":"BK","2026-09-30":"M","2026-10-06":"PS","2026-10-13":"BK","2026-10-14":"M","2026-10-20":"PS","2026-10-27":"BK","2026-10-28":"M","2026-11-03":"PS","2026-11-10":"BK","2026-11-11":"M","2026-11-16":"T","2026-11-17":"PS","2026-11-24":"BK","2026-11-25":"M","2026-12-01":"PS","2026-12-08":"BK","2026-12-09":"MW","2026-12-15":"PS","2026-12-22":"BK","2026-12-23":"M","2026-12-29":"PS"};
-const B={M:["Zmieszane","🗑️","#7b8794"],P:["Plastik, metale, opakowania","♻️","#f2c230"],S:["Szkło","🍾","#2e9e63"],B:["Bio","🥬","#8b5a2b"],K:["Papier","📰","#2f7fd0"],W:["Wielkogabaryty, RTV i AGD","🛋️","#d84a4a"],T:["Tekstylia","👕","#9a5bbd"]};
+const GUIDE_IMG="co-gdzie-wrzucac.jpg";
+const B={M:["Zmieszane","var(--M)","sq"],P:["Plastik, metale, opakowania","var(--P)","circle"],S:["Szkło","var(--S)","tri"],B:["Bio","var(--B)","semi"],K:["Papier","var(--K)","dia"],W:["Wielkogabaryty, RTV i AGD","var(--W)","cross"],T:["Tekstylia","var(--T)","pill"]};
 const pad=n=>String(n).padStart(2,"0");
 const parse=k=>{const [a,b,c]=k.split("-").map(Number);return new Date(a,b-1,c)};
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -103,29 +143,29 @@ const fMon=new Intl.DateTimeFormat("pl-PL",{month:"short"});
 const fMonL=new Intl.DateTimeFormat("pl-PL",{month:"long"});
 const today=new Date();today.setHours(0,0,0,0);
 const keys=Object.keys(D).sort();
-const bin=c=>{const [n,e,col]=B[c];return '<div class="bin"><svg viewBox="0 0 72 88" aria-hidden="true"><rect x="6" y="6" width="60" height="12" rx="5" fill="'+col+'"/><rect x="28" y="1" width="16" height="7" rx="3" fill="'+col+'"/><path d="M11 20h50l-4 62a5 5 0 0 1-5 4H20a5 5 0 0 1-5-4z" fill="'+col+'"/><path d="M11 20h50l-1 12H12z" fill="rgba(255,255,255,.22)"/><text x="36" y="66" font-size="30" text-anchor="middle">'+e+'</text></svg><span>'+n+'</span></div>'};
+const shape=c=>'<i class="sh sh-'+B[c][2]+'" style="--c:'+B[c][1]+'" title="'+B[c][0]+'"></i>';
+const shapes=v=>[...v].map(shape).join("");
+const short=c=>B[c][0].split(",")[0];
+const bin=c=>'<div class="bin"><svg viewBox="0 0 52 66" aria-hidden="true"><rect x="2" y="8" width="48" height="7" fill="'+B[c][1]+'"/><rect x="18" y="2" width="16" height="6" fill="'+B[c][1]+'"/><path d="M6 19h40l-3 45H9z" fill="'+B[c][1]+'"/></svg><span>'+B[c][0]+'</span></div>';
 const up=keys.filter(k=>parse(k)>=today);
 const hero=document.getElementById("hero");
 if(!up.length){
-  hero.innerHTML='<div class="hero"><div class="hero-top"><p class="big">🎉 Koniec roku</p><p class="date">Harmonogram na 2026 się skończył. Wgraj nowy, gdy gmina go wyśle.</p></div></div>';
+  hero.innerHTML='<div class="hero"><p class="big" style="font-size:2.4rem">Koniec roku</p><p class="date">Harmonogram na 2026 się skończył. Wgraj nowy, gdy gmina go wyśle.</p></div>';
 }else{
   const k=up[0],diff=Math.round((parse(k)-today)/864e5);
-  let big,msg="";
-  if(diff===0){big="Dziś!";msg="⏰ Pojemniki mają stać przed posesją do 7:00.";}
-  else if(diff===1){big="Jutro";msg="🌙 Wystaw pojemniki dziś wieczorem.";}
-  else if(diff<5){big="Za "+diff+" dni";}
-  else big="Za "+diff+" dni";
-  const who=[...D[k]].map(c=>B[c][0].split(",")[0].toLowerCase()).join(" + ");
-  hero.innerHTML='<div class="hero'+(diff<=1?" hot":"")+'"><div class="hero-top"><p class="when">Najbliższy wywóz</p><p class="big">'+big+'</p><p class="date">'+cap(fLong.format(parse(k)))+'</p>'+(msg?'<p class="alert">'+msg+'</p>':"")+'</div><div class="bins">'+[...D[k]].map(bin).join("")+'</div><p class="hero-foot">Wystaw: '+who+'</p></div>';
+  let big="Za "+diff+" dni",msg="";
+  if(diff===0){big="Dziś";msg="Pojemniki mają stać przed posesją do 7:00.";}
+  else if(diff===1){big="Jutro";msg="Wystaw pojemniki dziś wieczorem.";}
+  hero.innerHTML='<div class="hero'+(diff<=1?" hot":"")+'"><div class="lab">Najbliższy wywóz</div><div class="big">'+big+'</div><p class="date">'+cap(fLong.format(parse(k)))+'</p>'+(msg?'<p class="alert">'+msg+'</p>':"")+'<div class="bins">'+[...D[k]].map(bin).join("")+'</div></div>';
 }
-document.getElementById("next").innerHTML=up.slice(1,6).map(k=>{const d=parse(k);return '<div class="item"><div class="dd"><b>'+d.getDate()+'</b><small>'+fMon.format(d)+', '+fWd.format(d)+'</small></div><div><div class="em">'+[...D[k]].map(c=>B[c][1]).join("")+'</div><div class="nm">'+[...D[k]].map(c=>B[c][0].split(",")[0]).join(" + ")+'</div></div></div>'}).join("")||'<p class="note">Brak kolejnych wywozów.</p>';
+document.getElementById("next").innerHTML=up.slice(1,6).map(k=>{const d=parse(k);return '<div class="row"><div class="d"><b>'+d.getDate()+' '+fMon.format(d)+'</b><small>'+fWd.format(d)+'</small></div><div class="n">'+[...D[k]].map(short).join(", ")+'</div><div>'+shapes(D[k])+'</div></div>'}).join("")||'<p class="note">Brak kolejnych wywozów.</p>';
 const monthGrid=m=>{
   const first=new Date(2026,m,1),off=(first.getDay()+6)%7,n=new Date(2026,m+1,0).getDate();
   let g='<div class="cal">'+["pn","wt","śr","cz","pt","sb","nd"].map(x=>'<div class="h">'+x+'</div>').join("");
   if(off)g+='<div style="grid-column:span '+off+'"></div>';
   for(let d=1;d<=n;d++){
     const k="2026-"+pad(m+1)+"-"+pad(d),dt=new Date(2026,m,d),v=D[k];
-    g+='<div class="c'+(v?" on":"")+(+dt===+today?" today":"")+(dt<today?" past":"")+'"'+(v?' title="'+[...v].map(c=>B[c][0]).join(" + ")+'"':"")+'>'+d+(v?'<i>'+[...v].map(c=>B[c][1]).join("")+'</i>':"")+'</div>';
+    g+='<div class="c'+(+dt===+today?" today":"")+(dt<today?" past":"")+'"'+(v?' title="'+[...v].map(c=>B[c][0]).join(", ")+'"':"")+'><span class="num">'+d+'</span>'+(v?'<span class="dots">'+shapes(v)+'</span>':"")+'</div>';
   }
   return g+'</div>';
 };
@@ -133,7 +173,7 @@ const nowM=today.getFullYear()<2026?0:today.getFullYear()>2026?11:today.getMonth
 let cur=nowM;
 const mc=document.getElementById("mcard");
 const drawMonth=()=>{
-  mc.innerHTML='<div class="mhead"><button id="pm" aria-label="Poprzedni miesiąc">‹</button><div style="display:flex;align-items:center"><h2>'+cap(fMonL.format(new Date(2026,cur,1)))+' 2026</h2>'+(cur!==nowM?'<button class="tod" id="tm">Dziś</button>':'')+'</div><button id="nm" aria-label="Następny miesiąc">›</button></div>'+monthGrid(cur);
+  mc.innerHTML='<div class="mhead"><h2>'+cap(fMonL.format(new Date(2026,cur,1)))+' 2026</h2><div class="ctl">'+(cur!==nowM?'<button class="tod" id="tm">Dziś</button>':'')+'<button id="pm" aria-label="Poprzedni miesiąc">←</button><button id="nm" aria-label="Następny miesiąc">→</button></div></div>'+monthGrid(cur);
   document.getElementById("pm").onclick=()=>{cur=(cur+11)%12;drawMonth()};
   document.getElementById("nm").onclick=()=>{cur=(cur+1)%12;drawMonth()};
   const t=document.getElementById("tm");if(t)t.onclick=()=>{cur=nowM;drawMonth()};
@@ -142,7 +182,27 @@ drawMonth();
 let html="";
 for(let m=0;m<12;m++)html+='<details><summary>'+cap(fMonL.format(new Date(2026,m,1)))+'</summary>'+monthGrid(m)+'</details>';
 document.getElementById("months").innerHTML=html;
-document.getElementById("legend").innerHTML=Object.values(B).map(b=>'<div><b style="background:'+b[2]+'"></b>'+b[1]+" "+b[0]+'</div>').join("");
+document.getElementById("legend").innerHTML=Object.keys(B).map(c=>'<div>'+shape(c).replace('margin-left','margin-left')+B[c][0]+'</div>').join("");
+
+/* zakładki */
+let hasGuide=false;
+const views=["terminarz","co-gdzie","gdzie"];
+const show=()=>{
+  let h=location.hash.slice(1);
+  if(!views.includes(h)||(h==="co-gdzie"&&!hasGuide))h="terminarz";
+  views.forEach(v=>{document.getElementById("v-"+v).hidden=v!==h});
+  document.querySelectorAll("nav a").forEach(a=>{if(a.dataset.v===h)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  window.scrollTo(0,0);
+};
+window.addEventListener("hashchange",show);
+const probe=new Image();
+probe.onload=()=>{hasGuide=true;
+  document.getElementById("guide-img").src=GUIDE_IMG;
+  document.getElementById("guide-link").href=GUIDE_IMG;
+  document.getElementById("guide-open").href=GUIDE_IMG;
+  document.getElementById("tab-guide").hidden=false;show()};
+probe.src=GUIDE_IMG;
+show();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
 </body>
