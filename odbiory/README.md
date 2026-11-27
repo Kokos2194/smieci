@@ -12,8 +12,10 @@ Prosta aplikacja do odbiorów budynku wielorodzinnego (działa na telefonie, tak
 
 Aplikacja startuje pusta. Przykładową budowę można wczytać przyciskiem na ekranie startowym albo w Ustawieniach.
 
-Dane są zapisywane w przeglądarce na urządzeniu (IndexedDB). Aplikację można dodać do ekranu głównego telefonu.
+**Dwa tryby pracy (ta sama aplikacja):**
+- **Na serwerze NAS (Synology):** wspólna baza dla całego zespołu (PHP + SQLite, plik `api.php`). Każdy ma własne konto, przy usterce widać, kto ją wpisał i kto poprawił, administrator zarządza kontami i widzi historię zmian. Bez zasięgu zmiany czekają w telefonie i wysyłają się same. Instalacja: [INSTALACJA.md](INSTALACJA.md).
+- **Bez serwera** (np. GitHub Pages): dane zapisywane w przeglądarce na urządzeniu (IndexedDB). Aplikację można dodać do ekranu głównego telefonu.
 
 **Link do budowy (np. w Nozbe).** W menu ⋯ budowy jest link, który otwiera aplikację od razu na tej budowie (adres z dopiskiem `#b-nazwa-budowy`). Można go wkleić w zadaniu lub projekcie w Nozbe.
 
-Pliki: `index.html` (cała aplikacja), `sw.js` (działanie offline), `vendor/` (pdfmake 0.2.10, licencja MIT, do tworzenia PDF).
+Pliki: `index.html` (cała aplikacja), `api.php` (serwer na NAS), `sw.js` (działanie offline), `vendor/` (pdfmake 0.2.10, licencja MIT, do tworzenia PDF).
