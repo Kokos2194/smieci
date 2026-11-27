@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Protokół usterek</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#ECEEEF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111518" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Usterki">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: phone-first single column for use on site; the building is drawn as a stacked section (roof, slabs, ground hatch), the main action sits in the thumb zone. */
+:root{
+  --bg:#ECEEEF; --surface:#FFFFFF; --surface-2:#F3F5F6; --ink:#1B2126; --ink-2:#5A6570; --line:#D2D8DD;
+  --accent:#1E56C8; --accent-ink:#FFFFFF; --accent-soft:#E2EAF9;
+  --open:#C4401A; --open-soft:#FBE5DC; --done:#2A7D48; --done-soft:#DDEFE2; --on-signal:#FFFFFF;
+  --hatch:#8D98A2; --hatch-soft:rgba(27,33,38,.06); --dots:rgba(27,33,38,.22); --scrim:rgba(12,16,20,.48);
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 10px 30px rgba(20,30,40,.12);
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111518; --surface:#1A2025; --surface-2:#222A31; --ink:#E6EAED; --ink-2:#98A4AE; --line:#313B44;
+  --accent:#7DA3FF; --accent-ink:#0A1226; --accent-soft:#1D2A46;
+  --open:#FF8058; --open-soft:#3A221A; --done:#5DC685; --done-soft:#163021; --on-signal:#12100E;
+  --hatch:#5F6B76; --hatch-soft:rgba(230,234,237,.06); --dots:rgba(230,234,237,.2); --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111518; --surface:#1A2025; --surface-2:#222A31; --ink:#E6EAED; --ink-2:#98A4AE; --line:#313B44;
+  --accent:#7DA3FF; --accent-ink:#0A1226; --accent-soft:#1D2A46;
+  --open:#FF8058; --open-soft:#3A221A; --done:#5DC685; --done-soft:#163021; --on-signal:#12100E;
+  --hatch:#5F6B76; --hatch-soft:rgba(230,234,237,.06); --dots:rgba(230,234,237,.2); --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.4); color-scheme:dark}
+
+*,*::before,*::after{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--f-body);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+body.locked{overflow:hidden}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ic{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);padding-block:6px}
+.top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:4px;min-height:52px}
+.top-t{flex:1;min-width:0;padding-inline:4px}
+.top-t h1{margin:0;font:600 21px/1.15 var(--f-display);letter-spacing:.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-t p{margin:2px 0 0;font-size:13.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand h1{font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ib{width:44px;height:44px;flex:none;display:inline-grid;place-items:center;border:0;background:transparent;border-radius:12px;color:var(--ink);padding:0}
+.ib:hover{background:var(--surface-2)}
+.top .back{margin-left:-10px}
+.top .ib:last-child{margin-right:-8px}
+
+.main{max-width:760px;margin:0 auto;padding-block:18px 132px;display:flex;flex-direction:column;gap:24px}
+.sec{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:38px}
+.sh h2,.lbl,.fld>label{margin:0;font:600 13px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2)}
+.hint{margin:0;font-size:14px;color:var(--ink-2)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:16px;white-space:nowrap;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--ink-2)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.sm{min-height:40px;padding:0 13px;font-size:15px;border-radius:10px}
+.btn.sm .ic{width:19px;height:19px}
+.btn.danger{color:var(--open);border-color:var(--open)}
+.btn.danger.armed{background:var(--open);color:var(--on-signal)}
+.btn.grow{flex:1;min-width:0}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* notes */
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--accent-soft);font-size:14.5px}
+.note.warn{background:var(--open-soft)}
+.note .ic{margin-top:1px}
+.note p{margin:0}
+.pill{display:inline-flex;align-items:center;gap:6px}
+.pill i{width:8px;height:8px;border-radius:4px;background:var(--done);flex:none}
+.pill.off i{background:var(--open)}
+
+/* project cards */
+.plist{display:flex;flex-direction:column;gap:12px}
+.pcard{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pcard:hover{border-color:var(--ink-2)}
+.pcard h3{margin:0;font:600 21px/1.2 var(--f-display)}
+.pcard .addr{margin-top:2px;color:var(--ink-2);font-size:14px}
+.tag{display:inline-block;margin-bottom:6px;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);font:600 11.5px/1.5 var(--f-display);text-transform:uppercase;letter-spacing:.08em}
+.pmeta{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:12px;font-size:14.5px;color:var(--ink-2)}
+.pmeta b{font:600 17px var(--f-display);color:var(--ink)}
+.pmeta .c-open{color:var(--open)} .pmeta .c-done{color:var(--done)}
+.prog{display:flex;height:8px;margin-top:10px;border-radius:4px;overflow:hidden;background:var(--surface-2)}
+.prog i{display:block;height:100%}
+.prog .p-done{background:var(--done)} .prog .p-open{background:var(--open)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;min-width:0}
+.stat b{display:block;font:600 32px/1 var(--f-display)}
+.stat span{display:block;margin-top:4px;font-size:13.5px;color:var(--ink-2)}
+.stat.open b{color:var(--open)} .stat.done b{color:var(--done)}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:0 13px;border-radius:21px;border:1.5px solid var(--line);background:var(--surface);font-size:15px;font-weight:500;text-align:left}
+.chip .ic{width:19px;height:19px}
+.chip .n{font:600 15px var(--f-display);color:var(--open)}
+.chip .n.z{color:var(--ink-2)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.chips.sm .chip{min-height:38px;font-size:14.5px;padding:6px 12px;line-height:1.2}
+
+/* building section */
+.bld-scroll{overflow-x:auto;margin-inline:-16px;padding:2px 6px 8px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.bld{position:relative;margin-inline:4px;min-width:var(--minw,0px);border-inline:2px solid var(--ink);background:var(--surface)}
+.roof{height:9px;margin-inline:-4px;border-top:3px solid var(--ink);border-bottom:2px solid var(--ink);background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 9px)}
+.fl{display:grid;grid-template-columns:50px minmax(0,1fr);border-bottom:2px solid var(--ink)}
+.fl.under{background-image:repeating-linear-gradient(135deg,var(--hatch-soft) 0 5px,transparent 5px 10px)}
+.fl-lab{position:sticky;left:0;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:3px;padding:8px 3px 8px 6px;border:0;border-right:1px solid var(--line);background:var(--surface-2);text-align:left;min-width:0}
+.fl-lab b{font:700 20px/1 var(--f-display)}
+.fl-lab span{font-size:11.5px;line-height:1.2;color:var(--ink-2);overflow-wrap:anywhere}
+.fl-lab:hover b{color:var(--accent)}
+.fl-units{display:grid;grid-template-columns:var(--cols,repeat(4,minmax(56px,1fr)));overflow:hidden;min-width:0}
+.u{position:relative;min-height:72px;padding:8px 7px 15px;border:0;background-color:transparent;text-align:left;box-shadow:1px 0 0 var(--line),0 1px 0 var(--line);display:flex;flex-direction:column;min-width:0}
+.u:hover .u-n{color:var(--accent)}
+.u-n{font:600 18px/1.1 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u.common{background-image:repeating-linear-gradient(135deg,var(--hatch-soft) 0 6px,transparent 6px 12px)}
+.u.common .u-n{font-size:13px;font-weight:600;line-height:1.15;white-space:normal}
+.u.aux{background-image:radial-gradient(var(--dots) 1px,transparent 1.5px);background-size:7px 7px}
+.u.aux .u-n{font-size:13px;font-weight:600;line-height:1.15}
+.u.slim{padding:8px 3px 15px;align-items:center;text-align:center}
+.u.slim .u-n{font-size:16px;font-weight:700}
+.u.slim .u-sub{font-size:11.5px}
+.u.slim .u-c,.u.slim .u-ok{display:none}
+.u.slim .u-bar{left:4px;right:4px}
+.u-sub{font:500 12px/1.2 var(--f-display);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.u.st-open{background-color:var(--open-soft)}
+.u.st-done{background-color:var(--done-soft)}
+.u-c{position:absolute;bottom:14px;right:6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--open);color:var(--on-signal);font:600 13.5px/22px var(--f-display);text-align:center}
+.u-ok{position:absolute;bottom:12px;right:5px;color:var(--done)}
+.u-ok .ic{width:20px;height:20px;stroke-width:2.6}
+.u-bar{position:absolute;left:8px;right:8px;bottom:6px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--done) var(--p),var(--open) var(--p))}
+.u-add{align-items:center;justify-content:center;gap:4px;color:var(--ink-2);font-size:13px;grid-column:1/-1;flex-direction:row}
+.ground{height:14px;margin-inline:-14px;background:repeating-linear-gradient(135deg,var(--hatch) 0 1.5px,transparent 1.5px 7px)}
+.kl-head{display:grid;grid-template-columns:50px var(--cols,repeat(4,minmax(56px,1fr)));min-width:var(--minw,0px);margin-inline:4px;padding-inline:2px;margin-bottom:4px}
+.kl-head>*{min-width:0;padding:4px 8px 3px;border:0;background:none;text-align:left;font:700 13px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kl-head button:hover{color:var(--accent)}
+.kl-head .kst{box-shadow:inset 2px 0 0 var(--ink)}
+.u.kst{box-shadow:inset 2px 0 0 var(--ink),1px 0 0 var(--line),0 1px 0 var(--line);padding-left:9px}
+.u-empty{min-height:72px;min-width:0}
+.u-empty.kst{box-shadow:inset 2px 0 0 var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2)}
+.legend .l-aux{background-image:radial-gradient(var(--hatch) 1px,transparent 1.5px);background-size:5px 5px}
+.legend .l-kl{border:0;border-left:3px solid var(--ink);border-radius:0;background:none;width:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:14px;border-radius:3px;border:1px solid var(--line);background:var(--surface)}
+.legend .l-open{background:var(--open-soft);border-color:var(--open)}
+.legend .l-done{background:var(--done-soft);border-color:var(--done)}
+.legend .l-com{background-image:repeating-linear-gradient(135deg,var(--hatch) 0 1px,transparent 1px 4px)}
+
+/* segmented */
+.seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.seg button{flex:1;min-width:0;min-height:42px;border:0;border-radius:9px;background:transparent;font-weight:600;font-size:14.5px;color:var(--ink-2);padding:0 6px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg button span{font-family:var(--f-display);opacity:.8}
+
+/* defects */
+.dl{display:flex;flex-direction:column;gap:10px}
+.d{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px 12px 8px}
+.d.done{background:var(--surface-2)}
+.d.done .d-t{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--ink-2)}
+.ck{width:46px;height:46px;display:grid;place-items:center;border:0;background:transparent;padding:0;border-radius:10px;align-self:start}
+.ck i,.tgl i{width:30px;height:30px;border-radius:8px;border:2.5px solid var(--ink-2);display:grid;place-items:center;background:var(--surface);color:var(--on-signal)}
+.ck i .ic,.tgl i .ic{width:20px;height:20px;stroke-width:3}
+.ck[aria-checked="true"] i,.tgl[aria-checked="true"] i{background:var(--done);border-color:var(--done)}
+.d-b{display:flex;flex-direction:column;gap:3px;min-width:0;padding:4px 0 0;border:0;background:transparent;text-align:left}
+.d-cat{display:flex;align-items:center;gap:6px;font:600 12.5px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2)}
+.d-cat .ic{width:17px;height:17px}
+.d-t{font-weight:600;font-size:17px;line-height:1.3;overflow-wrap:anywhere}
+.d-note{font-size:14.5px;overflow-wrap:anywhere}
+.d-m{font-size:13px;color:var(--ink-2)}
+.d-m.ok{color:var(--done)}
+.thumbs{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.th{padding:0;border:0;background:none;border-radius:8px}
+.th img,.thumbs img{display:block;width:64px;height:64px;object-fit:cover;border-radius:8px;background:var(--surface-2);border:1px solid var(--line)}
+img.broken{visibility:hidden}
+.d.compact .d-t{font-size:16px}
+
+/* report */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:14.5px}
+.mx th,.mx td{padding:10px 9px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+.mx tr:last-child td{border-bottom:0}
+.mx th:first-child,.mx td:first-child{position:sticky;left:0;text-align:left;background:var(--surface);border-right:1px solid var(--line)}
+.mx thead th{font:600 12.5px/1.15 var(--f-display);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);vertical-align:bottom}
+.mx td:first-child{display:flex;align-items:center;gap:7px;font-weight:500}
+.mx td:first-child .ic{width:18px;height:18px}
+.mx td.z{color:var(--hatch)}
+.mx td.h{font:600 16px var(--f-display);color:var(--open)}
+.mx.done td.h{color:var(--done)}
+.mx td.t,.mx th.t{font-weight:700;background:var(--surface-2)}
+.mx tbody tr{cursor:pointer}
+.mx tbody tr.sel td{background:var(--accent-soft)}
+.mx tfoot td{font-weight:700;background:var(--surface-2);border-top:1.5px solid var(--line);border-bottom:0}
+.sel-wrap{position:relative}
+.inp,select.inp{width:100%;min-height:48px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:16px}
+textarea.inp{min-height:76px;resize:vertical;line-height:1.4}
+.inp:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.rg-f{margin:14px 0 2px;padding-bottom:6px;border-bottom:2px solid var(--ink);font:700 15px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.09em;display:flex;justify-content:space-between;gap:8px}
+.rg-f span{color:var(--ink-2);font-weight:600}
+.rg-u{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:10px 0 6px;font:600 18px var(--f-display)}
+.rg-u button{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left}
+.rg-u button:hover{color:var(--accent)}
+.rg-u span{font:500 13.5px var(--f-body);color:var(--ink-2)}
+.checkline{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px}
+.checkline input{width:22px;height:22px;accent-color:var(--accent)}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:center}
+.nav-u{display:inline-flex;align-items:center;gap:2px;min-height:48px;min-width:64px;padding:0 8px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font:600 15px var(--f-display);justify-content:center}
+.nav-u:disabled{opacity:.35}
+.nav-u .ic{width:18px;height:18px}
+
+/* empty */
+.empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 18px;text-align:center;border:1.5px dashed var(--line);border-radius:16px;color:var(--ink-2)}
+.empty h3{margin:0;font:600 21px var(--f-display);color:var(--ink)}
+.empty p{margin:0;max-width:36ch}
+.empty svg.art{width:120px;height:auto;color:var(--ink-2)}
+
+/* sheet */
+#sheet-root{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet-back{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .2s}
+#sheet-root.in .sheet-back{opacity:1}
+.sheet{position:relative;width:100%;max-width:640px;max-height:calc(100% - env(safe-area-inset-top,0px) - 10px);display:flex;flex-direction:column;background:var(--bg);border-radius:18px 18px 0 0;box-shadow:var(--shadow);transform:translateY(28px);opacity:0;transition:transform .22s ease,opacity .2s ease}
+#sheet-root.in .sheet{transform:none;opacity:1}
+.sheet.full{height:calc(100% - env(safe-area-inset-top,0px) - 10px)}
+.sh-h{display:flex;align-items:center;gap:6px;padding-block:8px;border-bottom:1px solid var(--line)}
+.sh-h h2{flex:1;min-width:0;margin:0;font:600 21px/1.2 var(--f-display)}
+.sh-h .ctx{font:600 15px var(--f-display);color:var(--ink-2);white-space:nowrap}
+.sh-h .ib:first-child{margin-left:-10px}
+.sh-b{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-block:16px 20px;display:flex;flex-direction:column;gap:20px}
+.sh-f{display:flex;gap:10px;padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface)}
+.fld{display:flex;flex-direction:column;gap:8px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (min-width:520px){.cats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.cat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:72px;padding:8px 4px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-size:14.5px;font-weight:600;min-width:0}
+.cat .ic{width:27px;height:27px}
+.cat[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1.5px var(--accent);color:var(--ink)}
+.ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.ph:empty{display:none}
+.ph-i{position:relative;aspect-ratio:1;max-width:100%;border-radius:10px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center}
+.ph-i img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-x{position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:17px;border:0;background:rgba(0,0,0,.62);color:#fff;display:grid;place-items:center;padding:0}
+.ph-x .ic{width:18px;height:18px}
+.tgl{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;font-size:16.5px;text-align:left}
+.tgl[aria-checked="true"]{border-color:var(--done);background:var(--done-soft)}
+.err{margin:0;padding:10px 12px;border-radius:10px;background:var(--open-soft);color:var(--ink);font-weight:500}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:15px}
+.kv dt{color:var(--ink-2)} .kv dd{margin:0;font-weight:500}
+.preview{margin:0;padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:14.5px}
+.txtout{width:100%;min-height:240px;font:14px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+
+/* lightbox, toast */
+.lb{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:calc(56px + env(safe-area-inset-top,0px)) 8px calc(56px + env(safe-area-inset-bottom,0px))}
+.lb img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+.lb .ib{position:absolute;color:#fff;background:rgba(255,255,255,.12)}
+.lb .lb-x{top:calc(8px + env(safe-area-inset-top,0px));right:max(8px,env(safe-area-inset-right,0px))}
+.lb .lb-p{left:max(8px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%)}
+.lb .lb-n{right:max(8px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%)}
+.lb .lb-c{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#fff;font:600 15px var(--f-display)}
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70;max-width:calc(100% - 32px);padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:500;box-shadow:var(--shadow);opacity:0;transform:translate(-50%,16px);pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:80px 16px;color:var(--ink-2);text-align:center}
+@media (prefers-reduced-motion:reduce){.sheet,.sheet-back,#toast{transition:none}.spin{animation-duration:2.4s}}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><span class="spin"></span>Wczytywanie…</div></div>
+<div id="sheet-root" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+(function(){
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+const coll=new Intl.Collator('pl',{numeric:true,sensitivity:'base'});
+const cmp=(a,b)=>coll.compare(a||'',b||'');
+const fmtDate=t=>t?new Date(t).toLocaleDateString('pl-PL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+const ymd=(t=Date.now())=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const plural=(n,a,b,c)=>n===1?a:(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?b:c;
+const slug=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\u0142/g,'l').replace(/\u0141/g,'L').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'budowa';
+const ic=(p,cls='')=>`<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+const lvlCode=l=>l===0?'±0':l>0?'+'+l:'−'+Math.abs(l);
+const floorAutoName=l=>l===0?'Parter':l>0?'Piętro '+l:'Poziom −'+Math.abs(l);
+
+const UI={
+  back:'<path d="M15 5l-7 7 7 7"/>', plus:'<path d="M12 5v14M5 12h14"/>',
+  more:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  camera:'<path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.3l1.6-2.2h7.2L17.2 7h2.3A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/><circle cx="12" cy="13" r="3.6"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>', check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  chev:'<path d="m9 5 7 7-7 7"/>', chevl:'<path d="m15 5-7 7 7 7"/>',
+  list:'<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>',
+  pdf:'<path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h5"/>',
+  table:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 15h18M9 4v16"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>',
+  trash:'<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  share:'<path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7.5A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V12"/>',
+  down:'<path d="M12 3v12M7.5 10.5 12 15l4.5-4.5"/><path d="M4 19.5h16"/>',
+  upload:'<path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/><path d="M4 19.5h16"/>',
+};
+const ART_BUILDING='<svg class="art" viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M24 82V18h72v64"/><path d="M18 18h84M24 34h72M24 50h72M24 66h72M60 18v64"/><path d="M4 82h112" stroke-width="3"/><path d="M8 88l6-6M20 88l6-6M32 88l6-6M44 88l6-6M56 88l6-6M68 88l6-6M80 88l6-6M92 88l6-6M104 88l6-6" stroke-width="1.2"/></svg>';
+
+/* ---------- categories & typical defects ---------- */
+const CATS=[
+ {id:'okna',name:'Okna',ic:'<rect x="5" y="3" width="14" height="16" rx="1"/><path d="M12 3v16M5 11h14M3 21h18"/>',
+  items:['Rysa na szybie','Okno źle wyregulowane – ociera','Nieszczelność – przewiew','Uszkodzona rama / skrzydło','Brak lub uszkodzona klamka','Brak obróbki / silikonu','Uszkodzony parapet','Zabrudzenia na profilu','Brak nawiewnika','Uszczelka do wymiany']},
+ {id:'drzwi',name:'Drzwi',ic:'<path d="M6 21V3h12v18M3 21h18"/><path d="M15 11.5v1.2"/>',
+  items:['Drzwi ocierają o ościeżnicę','Uszkodzone skrzydło','Rysa na ościeżnicy','Brak lub uszkodzona klamka','Zamek nie działa','Brak listwy progowej','Brak podcięcia wentylacyjnego','Drzwi samoczynnie się otwierają']},
+ {id:'elektryka',name:'Elektryka',ic:'<path d="M13 2 5 13h6l-1 9 8-11h-6l1-9z"/>',
+  items:['Gniazdo nie działa','Łącznik nie działa','Brak osprzętu','Krzywo zamontowany osprzęt','Brak pokrywy puszki','Oprawa oświetleniowa nie działa','Brak opisu w rozdzielnicy','Domofon nie działa','Brak sygnału RTV / internetu']},
+ {id:'hydraulika',name:'Hydraulika',ic:'<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z"/>',
+  items:['Przeciek na połączeniu','Brak syfonu / zaślepki','Brak rozety','Uszkodzona armatura','Zawór nie działa','Brak plomby na wodomierzu','Woda nie spływa – brak spadku','Uszkodzony brodzik / wanna']},
+ {id:'ogrzewanie',name:'Ogrzewanie',ic:'<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7.5 6v12M12 6v12M16.5 6v12M6 18v2.5M18 18v2.5"/>',
+  items:['Grzejnik nie grzeje','Brak głowicy termostatycznej','Przeciek przy grzejniku','Grzejnik krzywo zawieszony','Uszkodzona powłoka grzejnika','Brak podzielnika ciepła','Grzejnik zapowietrzony']},
+ {id:'wentylacja',name:'Wentylacja',ic:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h10"/>',
+  items:['Brak kratki wentylacyjnej','Brak ciągu','Krzywo zamontowana kratka','Uszkodzony przewód / kanał','Hałas wentylatora']},
+ {id:'tynki',name:'Tynki',ic:'<path d="M3 14 11 6l5 5-8 8H3z"/><path d="m13.5 8.5 6-6M14 21h7"/>',
+  items:['Rysa na tynku','Odspojenie – głuchy tynk','Nierówności – do szpachlowania','Uszkodzony narożnik','Ubytek tynku','Brak tynku za grzejnikiem','Krzywa ściana / glif']},
+ {id:'malowanie',name:'Malowanie',ic:'<rect x="3" y="3" width="15" height="6" rx="1.5"/><path d="M18 6h3v5h-9v3"/><rect x="10.5" y="14" width="3" height="7" rx="1"/>',
+  items:['Zacieki','Prześwity – do poprawki','Zabrudzenia na ścianie','Nierówna linia styku kolorów','Ślady wałka / pędzla','Brak malowania']},
+ {id:'posadzki',name:'Posadzki',ic:'<path d="M2 19 6 8h12l4 11z"/><path d="M9.3 8 8 19M14.7 8 16 19M4.2 13.5h15.6"/>',
+  items:['Rysa na wylewce','Nierówność posadzki','Głuchy jastrych','Uszkodzony panel / deska','Brak listwy przypodłogowej','Brak dylatacji','Zabrudzenia posadzki']},
+ {id:'plytki',name:'Płytki',ic:'<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
+  items:['Pęknięta płytka','Głucha płytka','Brak lub ubytki fugi','Nierówne fugi','Brak silikonu w narożu','Krzywo docięta płytka','Uszkodzona listwa / narożnik']},
+ {id:'balkon',name:'Balkon',ic:'<path d="M2 10h20M2 20h20M4 10v10M8 10v10M12 10v10M16 10v10M20 10v10M7 10V4h10v6"/>',
+  items:['Uszkodzona balustrada','Brak spadku – zastoiny','Uszkodzona okładzina','Brak obróbki blacharskiej','Korozja balustrady','Uszkodzona hydroizolacja']},
+ {id:'inne',name:'Inne',ic:'<circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/>',
+  items:['Brak elementu','Uszkodzenie mechaniczne','Brak sprzątnięcia','Brak numeracji / oznakowania','Do sprawdzenia']},
+];
+const CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
+const ROOMS=['Salon','Pokój','Pokój 2','Pokój 3','Kuchnia','Łazienka','WC','Przedpokój','Garderoba','Balkon','Taras','Komórka','Klatka schodowa','Korytarz','Garaż','Elewacja'];
+const STATUS={open:'do poprawy',done:'poprawione',all:'wszystkie'};
+
+/* ---------- environment & prefs ---------- */
+const Env={artifact:!!(window.claude&&typeof window.claude.use==='function'),downloads:null,assets:false};
+const Prefs={get(k,d){try{const v=localStorage.getItem('pu.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('pu.'+k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- store ---------- */
+const KINDS=['projects','floors','units','defects'];
+const Store={mode:'loading',ready:false,note:'',readOnly:false,data:{projects:new Map(),floors:new Map(),units:new Map(),defects:new Map()},urls:new Map()};
+let B=null;
+
+function idbReq(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+const LocalBackend={
+  name:'local',
+  async init(){
+    const open=indexedDB.open('protokol-usterek',1);
+    open.onupgradeneeded=()=>{const d=open.result;[...KINDS,'photos','meta'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})})};
+    this.db=await idbReq(open);
+    for(const k of KINDS){const rows=await idbReq(this.db.transaction(k).objectStore(k).getAll());Store.data[k]=new Map(rows.map(r=>[r.id,r]))}
+    const seeded=await idbReq(this.db.transaction('meta').objectStore('meta').get('seeded'));
+    return {firstRun:!seeded};
+  },
+  tx(store,mode,fn){return idbReq(fn(this.db.transaction(store,mode).objectStore(store)))},
+  markSeeded(){return this.tx('meta','readwrite',s=>s.put({id:'seeded',at:Date.now()}))},
+  put(k,o){return this.tx(k,'readwrite',s=>s.put(o))},
+  del(k,id){return this.tx(k,'readwrite',s=>s.delete(id))},
+  async addPhoto(blob){const id=uid();await this.tx('photos','readwrite',s=>s.put({id,blob}));return 'l:'+id},
+  async photoBlob(ref){const r=await this.tx('photos','readonly',s=>s.get(ref.slice(2)));return r?r.blob:null},
+  delPhoto(ref){return this.tx('photos','readwrite',s=>s.delete(ref.slice(2)))},
+};
+const MemoryBackend={
+  name:'memory',photos:new Map(),
+  async init(){return {firstRun:true}},markSeeded(){},put(){},del(){},
+  async addPhoto(blob){const id=uid();this.photos.set(id,blob);return 'l:'+id},
+  async photoBlob(ref){return this.photos.get(ref.slice(2))||null},
+  delPhoto(ref){this.photos.delete(ref.slice(2))},
+};
+const wq=new Map();
+function enqueue(path,fn){const prev=wq.get(path)||Promise.resolve();const p=prev.catch(()=>{}).then(fn);wq.set(path,p);p.then(()=>{if(wq.get(path)===p)wq.delete(path)},()=>{if(wq.get(path)===p)wq.delete(path)});return p}
+const CloudBackend={
+  name:'cloud',
+  init(db,assets){
+    this.db=db;this.assets=assets;const got=new Set();
+    const timer=setTimeout(()=>{if(!Store.ready){Store.note='Nie mogę połączyć się z bazą. Sprawdź internet – dane pojawią się, gdy połączenie wróci.';render()}},10000);
+    KINDS.forEach(k=>{
+      db.collection(k).onSnapshot(snap=>{
+        Store.data[k]=new Map(snap.docs.map(d=>[d.id,Object.assign({},d.data(),{id:d.id})]));
+        if(!got.has(k)){got.add(k);if(got.size===KINDS.length){Store.ready=true;Store.note='';clearTimeout(timer);setTimeout(openFromHash)}}
+        bump();scheduleRender();
+      },err=>{console.warn(k,err);Store.note='Połączenie z bazą zostało przerwane. Odśwież stronę.';Store.ready=true;clearTimeout(timer);scheduleRender()});
+    });
+  },
+  put(k,o){const body=Object.assign({},o);delete body.id;return enqueue(k+'/'+o.id,()=>this.db.doc(k+'/'+o.id).set(body))},
+  del(k,id){return enqueue(k+'/'+id,()=>this.db.doc(k+'/'+id).delete())},
+  async addPhoto(blob){if(!this.assets)throw {code:'no_assets'};const r=await this.assets.upload(blob,{type:'image/jpeg'});return 'a:'+r.id},
+  async photoBlob(ref){if(!ref.startsWith('a:'))return null;const r=await fetch('/_blob/'+ref.slice(2));return r.ok?r.blob():null},
+  async delPhoto(ref){if(this.assets&&ref.startsWith('a:'))try{await this.assets.delete(ref.slice(2))}catch(e){}},
+};
+
+let IDX=null;
+function bump(){IDX=null}
+function idx(){
+  if(IDX)return IDX;
+  const D=Store.data,floorsBy=new Map(),unitsBy=new Map(),defBy=new Map(),defByP=new Map();
+  const push=(m,k,v)=>{let a=m.get(k);if(!a){a=[];m.set(k,a)}a.push(v)};
+  for(const f of D.floors.values())push(floorsBy,f.projectId,f);
+  for(const u of D.units.values())if(D.floors.has(u.floorId))push(unitsBy,u.floorId,u);
+  for(const d of D.defects.values())if(D.units.has(d.unitId)){push(defBy,d.unitId,d);push(defByP,d.projectId,d)}
+  for(const a of floorsBy.values())a.sort((x,y)=>(x.level-y.level)||cmp(x.name,y.name));
+  for(const a of unitsBy.values())a.sort((x,y)=>((x.order||0)-(y.order||0))||cmp(x.name,y.name));
+  for(const a of defBy.values())a.sort((x,y)=>(x.done-y.done)||((y.createdAt||0)-(x.createdAt||0)));
+  return IDX={floorsBy,unitsBy,defBy,defByP};
+}
+const floorsOf=pid=>idx().floorsBy.get(pid)||[];
+const unitsOf=fid=>idx().unitsBy.get(fid)||[];
+const defectsOfUnit=id=>idx().defBy.get(id)||[];
+const defectsOfProject=pid=>idx().defByP.get(pid)||[];
+const unitsOfProject=pid=>floorsOf(pid).flatMap(f=>unitsOf(f.id));
+function counts(list){let o=0,d=0;for(const x of list)x.done?d++:o++;return {open:o,done:d,total:o+d}}
+/* klatki (staircases): project.klatki lists them in order, unit.klatka assigns a unit; '' = whole building */
+const AUX=new Set(['garage','storage']);
+const KIND={flat:'Mieszkanie',common:'Część wspólna',garage:'Garaż',storage:'Komórka lokatorska'};
+const isFlat=u=>!u.kind||u.kind==='flat';
+const kLabel=k=>k?'Klatka '+k:'';
+const unitKl=id=>((Store.data.units.get(id)||{}).klatka)||'';
+function klatkiOf(pid){const p=Store.data.projects.get(pid);const out=[...((p&&p.klatki)||[])];for(const u of unitsOfProject(pid))if(u.klatka&&!out.includes(u.klatka))out.push(u.klatka);return out}
+function selKlatka(pid){const k=S.kl.get(pid)||'all';return k==='all'||klatkiOf(pid).includes(k)?k:'all'}
+function parseKlatki(v){return [...new Set(String(v||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean))].slice(0,12)}
+function unitSeq(pid){const kl=klatkiOf(pid),lv=new Map(floorsOf(pid).map((f,i)=>[f.id,i]));return unitsOfProject(pid).slice().sort((a,b)=>(kl.indexOf(a.klatka||'')-kl.indexOf(b.klatka||''))||(lv.get(a.floorId)-lv.get(b.floorId))||((a.order||0)-(b.order||0))||cmp(a.name,b.name))}
+const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor].filter(Boolean).join(' · ');
+
+function writeErr(e){
+  console.warn(e);const c=e&&e.code;
+  if(c==='invalid_argument'){Store.readOnly=true;toast('Masz dostęp tylko do podglądu – zmiany nie są zapisywane.')}
+  else if(c==='quota_exceeded')toast('Baza jest pełna. Usuń niepotrzebną budowę.');
+  else toast('Nie udało się zapisać. Sprawdź połączenie.');
+}
+function persist(kind,obj){Store.data[kind].set(obj.id,obj);bump();scheduleRender();return Promise.resolve().then(()=>B.put(kind,obj)).catch(writeErr)}
+async function pool(tasks,n=4){let i=0;const run=async()=>{while(i<tasks.length){const t=tasks[i++];try{await t()}catch(e){console.warn(e)}}};await Promise.all(Array.from({length:Math.min(n,tasks.length)},run))}
+async function persistMany(items){
+  for(const [k,o] of items)Store.data[k].set(o.id,o);bump();scheduleRender();
+  let failed=null;await pool(items.map(([k,o])=>()=>Promise.resolve(B.put(k,o)).catch(e=>{failed=e})),4);if(failed)writeErr(failed);
+}
+async function removeMany(items,photos=[]){
+  for(const [k,id] of items)Store.data[k].delete(id);bump();scheduleRender();
+  let failed=null;await pool([...items.map(([k,id])=>()=>Promise.resolve(B.del(k,id)).catch(e=>{failed=e})),...photos.map(r=>()=>B.delPhoto(r))],4);if(failed)writeErr(failed);
+}
+function deleteDefects(ds){return removeMany(ds.map(d=>['defects',d.id]),ds.flatMap(d=>d.photos||[]))}
+function deleteUnit(u){const ds=defectsOfUnit(u.id);return removeMany([...ds.map(d=>['defects',d.id]),['units',u.id]],ds.flatMap(d=>d.photos||[]))}
+function deleteFloor(f){const us=unitsOf(f.id);const ds=us.flatMap(u=>defectsOfUnit(u.id));return removeMany([...ds.map(d=>['defects',d.id]),...us.map(u=>['units',u.id]),['floors',f.id]],ds.flatMap(d=>d.photos||[]))}
+function deleteProject(p){
+  const D=Store.data;const ds=[...D.defects.values()].filter(d=>d.projectId===p.id);const us=[...D.units.values()].filter(u=>u.projectId===p.id);const fs=[...D.floors.values()].filter(f=>f.projectId===p.id);
+  return removeMany([...ds.map(d=>['defects',d.id]),...us.map(u=>['units',u.id]),...fs.map(f=>['floors',f.id]),['projects',p.id]],ds.flatMap(d=>d.photos||[]));
+}
+
+/* ---------- photos ---------- */
+function imgSrc(ref){return ref.startsWith('a:')?'/_blob/'+ref.slice(2):(Store.urls.get(ref)||'')}
+function imgTag(ref){const s=imgSrc(ref);return `<img alt="" decoding="async" ${s?`src="${esc(s)}"`:`data-ref="${esc(ref)}"`}>`}
+function hydrate(root){
+  $$('img[data-ref]',root).forEach(async img=>{
+    const ref=img.dataset.ref;img.removeAttribute('data-ref');
+    try{let u=Store.urls.get(ref);if(!u){const b=await B.photoBlob(ref);if(!b)throw 0;u=URL.createObjectURL(b);Store.urls.set(ref,u)}img.src=u}catch(e){img.classList.add('broken')}
+  });
+}
+document.addEventListener('error',e=>{if(e.target&&e.target.tagName==='IMG')e.target.classList.add('broken')},true);
+function loadBitmap(blob){
+  if(window.createImageBitmap)return createImageBitmap(blob).catch(()=>loadImg(blob));
+  return loadImg(blob);
+}
+function loadImg(blob){return new Promise((res,rej)=>{const u=URL.createObjectURL(blob);const i=new Image();i.onload=()=>{res(i);setTimeout(()=>URL.revokeObjectURL(u),1000)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('img'))};i.src=u})}
+async function compressPhoto(file){
+  const img=await loadBitmap(file);const w=img.width,h=img.height,s=Math.min(1,1600/Math.max(w,h));
+  const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);const g=c.getContext('2d');g.drawImage(img,0,0,c.width,c.height);
+  const stamp=new Date().toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const fs=Math.max(14,Math.round(c.width*0.028));g.font=`600 ${fs}px sans-serif`;g.textAlign='right';g.textBaseline='bottom';
+  g.lineWidth=Math.max(3,fs/5);g.strokeStyle='rgba(0,0,0,.65)';g.fillStyle='#fff';const x=c.width-fs*.6,y=c.height-fs*.5;g.strokeText(stamp,x,y);g.fillText(stamp,x,y);
+  return await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('blob')),'image/jpeg',.8));
+}
+async function photoDataUrl(ref,max){
+  let b=null;try{b=await B.photoBlob(ref)}catch(e){}if(!b)return null;
+  try{const img=await loadBitmap(b);const s=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.72)}catch(e){return null}
+}
+function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)})}
+async function dataUrlToBlob(u){const r=await fetch(u);return r.blob()}
+
+/* ---------- navigation ---------- */
+const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',photos:Prefs.get('pdfPhotos',true)}};
+const stack=[];let ignorePop=false;
+function go(view,params={}){
+  stack.push({view:S.view,projectId:S.projectId,unitId:S.unitId,y:window.scrollY});
+  Object.assign(S,{view},params);
+  if(!Env.artifact)try{history.pushState({d:stack.length},'')}catch(e){}
+  render();window.scrollTo(0,0);
+}
+function back(fromPop){
+  const prev=stack.pop();
+  if(!prev){S.view='home';render();return}
+  Object.assign(S,{view:prev.view,projectId:prev.projectId,unitId:prev.unitId});
+  if(!fromPop&&!Env.artifact){ignorePop=true;try{history.back()}catch(e){ignorePop=false}}
+  render();window.scrollTo(0,prev.y||0);
+}
+window.addEventListener('popstate',()=>{
+  if(ignorePop){ignorePop=false;return}
+  if(!$('#sheet-root').hidden||$('.lb')){closeLightbox();closeSheet();try{history.pushState({d:stack.length},'')}catch(e){}return}
+  back(true);
+});
+
+let rq=0;function scheduleRender(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;render()})}
+function render(){
+  const app=$('#app');let html;
+  if(!Store.ready)html=viewLoading();
+  else if(S.view==='project')html=viewProject();
+  else if(S.view==='unit')html=viewUnit();
+  else if(S.view==='report')html=viewReport();
+  else if(S.view==='settings')html=viewSettings();
+  else html=viewHome();
+  const sc=$('.bld-scroll',app);if(sc)bldScroll.set(sc.dataset.pid,sc.scrollLeft);
+  app.innerHTML=html;hydrate(app);
+  const sc2=$('.bld-scroll',app);if(sc2){sc2.scrollLeft=bldScroll.get(sc2.dataset.pid)||0;bldHint()}
+}
+const bldScroll=new Map();
+function bldHint(){const sc=$('.bld-scroll'),h=$('#bld-hint');if(sc&&h)h.hidden=sc.scrollWidth<=sc.clientWidth+2}
+window.addEventListener('resize',bldHint);
+function top({title,sub='',back:b=true,actions='',brand=false}){
+  return `<header class="top gut"><div class="top-in">${b?`<button class="ib back" data-act="back" aria-label="Wstecz">${ic(UI.back)}</button>`:''}<div class="top-t ${brand?'brand':''}"><h1>${esc(title)}</h1>${sub?`<p>${sub}</p>`:''}</div>${actions}</div></header>`;
+}
+function modeLine(){
+  if(Store.mode==='cloud')return `<span class="pill"><i></i>Zapis w chmurze – ten sam stan na telefonie i komputerze</span>`;
+  if(Store.mode==='local')return `<span class="pill"><i></i>Zapis na tym urządzeniu</span>`;
+  if(Store.mode==='memory')return `<span class="pill off"><i></i>Podgląd – dane nie są zapisywane</span>`;
+  return '';
+}
+function viewLoading(){return `${top({title:'Protokół usterek',back:false,brand:true})}<main class="main gut"><div class="loading"><span class="spin"></span><div>${esc(Store.note||'Wczytywanie danych…')}</div></div></main>`}
+
+/* ---------- views ---------- */
+function viewHome(){
+  const ps=[...Store.data.projects.values()].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const cards=ps.map(p=>{
+    const c=counts(defectsOfProject(p.id));const nU=unitsOfProject(p.id).filter(isFlat).length;
+    const pd=c.total?c.done/c.total*100:0,po=c.total?c.open/c.total*100:0;
+    return `<button class="pcard" data-act="open-project" data-id="${p.id}">${p.demo?'<span class="tag">Przykład</span>':''}
+      <h3>${esc(p.name)}</h3>${p.address?`<div class="addr">${esc(p.address)}</div>`:''}
+      <div class="pmeta"><span><b class="c-open">${c.open}</b> do poprawy</span><span><b class="c-done">${c.done}</b> poprawione</span><span><b>${nU}</b> ${plural(nU,'mieszkanie','mieszkania','mieszkań')}</span></div>
+      <div class="prog" aria-hidden="true"><i class="p-done" style="width:${pd}%"></i><i class="p-open" style="width:${po}%"></i></div></button>`;
+  }).join('');
+  return `${top({title:'Protokół usterek',sub:modeLine(),back:false,brand:true,actions:`<button class="ib" data-act="settings" aria-label="Ustawienia i kopia zapasowa">${ic(UI.gear)}</button>`})}
+  <main class="main gut">
+    ${Store.note?`<div class="note warn">${ic(UI.info)}<p>${esc(Store.note)}</p></div>`:''}
+    ${Store.mode==='memory'?`<div class="note warn">${ic(UI.info)}<p>Ta przeglądarka nie pozwala zapisywać danych. Możesz wypróbować aplikację, ale po zamknięciu wpisy znikną.</p></div>`:''}
+    <section class="sec"><div class="sh"><h2>Budowy</h2><button class="btn sm pri" data-act="new-project">${ic(UI.plus)}Nowa budowa</button></div>
+    ${ps.length?`<div class="plist">${cards}</div>`:`<div class="empty">${ART_BUILDING}<h3>Nie ma jeszcze żadnej budowy</h3><p>Dodaj budowę, a generator od razu rozpisze kondygnacje i mieszkania. Możesz też obejrzeć gotowy przykład.</p><div class="row" style="justify-content:center"><button class="btn pri" data-act="new-project">${ic(UI.plus)}Nowa budowa</button><button class="btn" data-act="load-demo">Wczytaj przykład</button></div></div>`}
+    </section>
+  </main>`;
+}
+
+function viewProject(){
+  const p=Store.data.projects.get(S.projectId);if(!p){S.view='home';return viewHome()}
+  const fl=floorsOf(p.id),ds=defectsOfProject(p.id),c=counts(ds);
+  const flats=unitsOfProject(p.id).filter(isFlat);const cleanFlats=flats.filter(u=>!counts(defectsOfUnit(u.id)).open).length;
+  const byCat=new Map();for(const d of ds)if(!d.done)byCat.set(d.cat,(byCat.get(d.cat)||0)+1);
+  const chips=CATS.filter(k=>byCat.get(k.id)).map(k=>`<button class="chip" data-act="report-cat" data-cat="${k.id}">${ic(k.ic)}${k.name}<span class="n">${byCat.get(k.id)}</span></button>`).join('');
+  const kl=klatkiOf(p.id),sel=selKlatka(p.id);
+  const klTabs=kl.length>1?`<div class="chips" role="group" aria-label="Klatka"><button class="chip" data-act="kl" data-k="all" aria-pressed="${sel==='all'}">Cały budynek</button>${kl.map(k=>{const n=ds.filter(d=>!d.done&&unitKl(d.unitId)===k).length;return `<button class="chip" data-act="kl" data-k="${esc(k)}" aria-pressed="${sel===k}">${esc(kLabel(k))}<span class="n ${n?'':'z'}">${n}</span></button>`}).join('')}</div>`:'';
+  return `${top({title:p.name,sub:esc(p.address||''),actions:`<button class="ib" data-act="edit-project" data-id="${p.id}" aria-label="Edytuj budowę">${ic(UI.more)}</button>`})}
+  <main class="main gut">
+    ${p.demo?`<div class="note">${ic(UI.info)}<p>To przykładowa budowa do wypróbowania. Odhaczaj, dopisuj, generuj zestawienia. Usuniesz ją w menu ⋯ u góry.</p></div>`:''}
+    <div class="stats"><div class="stat open"><b>${c.open}</b><span>do poprawy</span></div><div class="stat done"><b>${c.done}</b><span>poprawione</span></div><div class="stat"><b>${cleanFlats}/${flats.length}</b><span>mieszkań bez usterek</span></div></div>
+    <section class="sec"><div class="sh"><h2>Do poprawy wg rodzaju</h2><button class="btn sm" data-act="report">${ic(UI.list)}Zestawienia</button></div>
+      ${chips?`<div class="chips">${chips}</div>`:`<p class="hint">${c.total?'Wszystkie usterki są poprawione.':'Brak wpisanych usterek. Wybierz mieszkanie na przekroju poniżej.'}</p>`}
+    </section>
+    <section class="sec"><div class="sh"><h2>Budynek</h2></div>
+      ${klTabs}
+      ${buildingHtml(p,fl)}
+      ${fl.length?`<div class="legend"><span><i class="l-open"></i>są usterki</span><span><i class="l-done"></i>wszystko poprawione</span><span><i></i>bez usterek</span><span><i class="l-com"></i>część wspólna</span><span><i class="l-aux"></i>garaże / komórki</span>${kl.length>1?'<span><i class="l-kl"></i>granica klatki</span>':''}</div>
+      <p class="hint">Dotknij mieszkania, żeby wpisać usterki. Dotknij oznaczenia kondygnacji (np. +1), żeby ją zmienić albo dodać lokal. Nową kondygnację dodasz w menu ⋯ budowy.</p>`:''}
+    </section>
+  </main>
+  <div class="bar gut"><div class="bar-in"><button class="btn pri grow" data-act="report">${ic(UI.list)}Zestawienie usterek</button></div></div>`;
+}
+function buildingHtml(p,fl){
+  if(!fl.length)return `<div class="empty">${ART_BUILDING}<h3>Budynek jest pusty</h3><p>Generator utworzy kondygnacje, klatki, mieszkania, garaże i komórki z numeracją. Potem możesz je dowolnie zmieniać.</p><button class="btn pri" data-act="generator">Generator kondygnacji</button></div>`;
+  const all=klatkiOf(p.id),sel=selKlatka(p.id),kl=sel==='all'?all:[sel];
+  // per floor: regular units (flats, common areas) get full cells; garages and storage rooms collapse into one group cell
+  const info=new Map();
+  for(const f of fl){
+    const reg=new Map(),aux=new Map();
+    for(const u of unitsOf(f.id)){const k=u.klatka||'';if(AUX.has(u.kind)){if(!aux.has(k))aux.set(k,new Map());const m=aux.get(k);if(!m.has(u.kind))m.set(u.kind,[]);m.get(u.kind).push(u)}else{if(!reg.has(k))reg.set(k,[]);reg.get(k).push(u)}}
+    const regs=k=>(reg.get(k)||[]).map(u=>({u})),groups=k=>[...(aux.get(k)||new Map()).entries()].map(([kind,us])=>({g:{kind,k,us,f}}));
+    const block=kl.length?kl.some(k=>(reg.get(k)||[]).length):f.level>=0;
+    info.set(f.id,{regs,groups,items:k=>[...regs(k),...groups(k)],block});
+  }
+  const blocks=kl.map(k=>({k,wr:0,wg:0}));const ex={k:'',wr:0,wg:0};let need=0;
+  for(const f of fl){const I=info.get(f.id);
+    if(I.block){for(const b of blocks){b.wr=Math.max(b.wr,I.regs(b.k).length);b.wg=Math.max(b.wg,I.groups(b.k).length)}ex.wr=Math.max(ex.wr,I.regs('').length);ex.wg=Math.max(ex.wg,I.groups('').length)}
+    else need=Math.max(need,I.items('').length+kl.reduce((a,k)=>a+I.items(k).length,0));
+  }
+  if(ex.wr+ex.wg||!blocks.length)blocks.push(ex);
+  for(const b of blocks)if(!b.wr&&!b.wg)b.wr=1;
+  let T=blocks.reduce((a,b)=>a+b.wr+b.wg,0);if(T<need){blocks[blocks.length-1].wr+=need-T;T=need}
+  // storage columns are narrow: they only mark that the floor has storage rooms
+  const cols=blocks.map(b=>[b.wr?`repeat(${b.wr},minmax(56px,1fr))`:'',b.wg?`repeat(${b.wg},minmax(36px,.6fr))`:''].join(' ')).join(' ');
+  const minw=54+blocks.reduce((a,b)=>a+b.wr*56+b.wg*36,0);
+  const head=kl.length?`<div class="kl-head"><span></span>${blocks.map((b,i)=>b.k?`<button class="${i?'kst':''}" style="grid-column:span ${b.wr+b.wg}" data-act="kl" data-k="${esc(sel===b.k?'all':b.k)}">${esc(kLabel(b.k))}</button>`:`<span class="${i?'kst':''}" style="grid-column:span ${b.wr+b.wg}"></span>`).join('')}</div>`:'';
+  const desc=[...fl].sort((a,b)=>b.level-a.level);const hasAbove=desc.some(f=>f.level>=0);
+  let out=`<p class="hint" id="bld-hint" hidden>Przesuń przekrój palcem w bok, żeby zobaczyć pozostałe lokale →</p><div class="bld-scroll" data-pid="${p.id}" style="--cols:${cols};--minw:${minw}px">${head}<div class="bld"><div class="roof"></div>`,ground=false;
+  for(const f of desc){if(!ground&&hasAbove&&f.level<0){out+='<div class="ground" title="Poziom terenu"></div>';ground=true}out+=floorRow(f,info.get(f.id),blocks,T,kl)}
+  if(!ground)out+='<div class="ground" title="Poziom terenu"></div>';
+  return out+'</div></div>';
+}
+function statusBits(ds){const c=counts(ds);const pc=c.total?Math.round(c.done/c.total*100):0;return {c,st:c.open?'st-open':c.done?'st-done':'',marks:`${c.open?`<span class="u-c">${c.open}</span>`:c.done?`<span class="u-ok">${ic(UI.check)}</span>`:''}${c.total?`<i class="u-bar" style="--p:${pc}%"></i>`:''}`}}
+function unitCell(u,cls='',style=''){
+  const {c,st,marks}=statusBits(defectsOfUnit(u.id));
+  return `<button class="u ${u.kind==='common'?'common':''} ${AUX.has(u.kind)?'aux':''} ${st} ${cls}" ${style?`style="${style}"`:''} data-act="open-unit" data-id="${u.id}" title="${esc(u.name)}" aria-label="${esc((u.klatka?kLabel(u.klatka)+', ':'')+u.name)}: ${c.open} do poprawy, ${c.done} poprawione"><span class="u-n">${esc(u.kind==='common'&&/^klatka schodowa$/i.test(u.name)?'Klatka':u.name)}</span>${marks}</button>`;
+}
+function groupCell(g,cls='',style=''){
+  const {c,st,marks}=statusBits(g.us.flatMap(u=>defectsOfUnit(u.id)));
+  const label=g.kind==='garage'?'Garaże':'Komórki',range=g.us.length>1?`${g.us[0].name}–${g.us[g.us.length-1].name}`:g.us[0].name,slim=/\bslim\b/.test(cls);
+  return `<button class="u aux ${st} ${cls}" ${style?`style="${style}"`:''} data-act="open-group" data-floor="${g.f.id}" data-kind="${g.kind}" data-k="${esc(g.k)}" title="${esc(label+' '+range)}" aria-label="${esc(label+' '+range)}, ${g.us.length} szt.: ${c.open} do poprawy"><span class="u-n">${slim?(g.kind==='garage'?'G':'K'):label}</span><span class="u-sub">${slim?'×'+g.us.length:esc(range)}</span>${marks}</button>`;
+}
+function itemCell(x,cls='',style=''){return x.g?groupCell(x.g,cls,style):unitCell(x.u,cls,style)}
+function floorRow(f,I,blocks,T,kl){
+  let cells='';
+  if(!unitsOf(f.id).length)cells=`<button class="u u-add" data-act="add-unit" data-floor="${f.id}">${ic(UI.plus)}Dodaj lokal</button>`;
+  else if(!I.block){
+    // garage level and similar: items stretch across the whole building; groups take one column, halls share the rest
+    const its=[...I.items(''),...kl.flatMap(k=>I.items(k))];const g=its.filter(x=>x.g).length,r=its.length-g;
+    const spans=its.map(x=>x.g&&r?1:0);let left=T-spans.reduce((a,b)=>a+b,0);const free=its.map((x,i)=>spans[i]?-1:i).filter(i=>i>=0);
+    free.forEach((i,j)=>{const sp=j===free.length-1?left:Math.max(1,Math.floor((T-(r?g:0))/free.length));spans[i]=sp;left-=sp});
+    cells=its.map((x,i)=>itemCell(x,'','grid-column:span '+spans[i])).join('');
+  }
+  else blocks.forEach((b,bi)=>{
+    // regular units from the left, storage/garage marks in the block's narrow columns at its end
+    const regs=I.regs(b.k),grs=I.groups(b.k);
+    for(let i=0;i<b.wr+b.wg;i++){const cls=i===0&&bi>0?'kst':'';const x=i<b.wr?regs[i]:grs[i-b.wr];cells+=x?itemCell(x,cls+(i>=b.wr?' slim':'')):`<span class="u-empty ${cls}"></span>`}
+  });
+  return `<div class="fl ${f.level<0?'under':''}"><button class="fl-lab" data-act="edit-floor" data-id="${f.id}" aria-label="Kondygnacja ${esc(f.name)} – edytuj"><b>${lvlCode(f.level)}</b><span>${esc(f.name)}</span></button><div class="fl-units">${cells}</div></div>`;
+}
+function openGroupSheet(fid,kind,k){
+  const f=Store.data.floors.get(fid);if(!f)return;const us=unitsOf(fid).filter(u=>u.kind===kind&&(u.klatka||'')===k);if(!us.length)return;
+  const title=kind==='garage'?'Garaże':'Komórki lokatorskie';
+  const html=`${sheetHead(title,[k&&kLabel(k),f.name].filter(Boolean).join(' · '))}<div class="sh-b gut"><div class="ugrid">${us.map(u=>unitCell(u)).join('')}</div><p class="hint">Dotknij numeru, żeby wpisać usterki. ${us.length} szt.</p></div>`;
+  openSheet(html,{onMount:el=>el.addEventListener('click',e=>{const b=e.target.closest('[data-act="open-unit"]');if(b){e.stopPropagation();const id=b.dataset.id;closeSheet();S.unitFilter='all';go('unit',{unitId:id,projectId:f.projectId})}})});
+}
+
+function defectItem(d,compact){
+  const k=CAT[d.cat]||CAT.inne;const ph=d.photos||[];
+  return `<article class="d ${d.done?'done':''} ${compact?'compact':''}">
+    <button class="ck" role="checkbox" aria-checked="${d.done?'true':'false'}" aria-label="Poprawione: ${esc(d.title)}" data-act="toggle" data-id="${d.id}"><i>${d.done?ic(UI.check):''}</i></button>
+    <button class="d-b" data-act="edit-defect" data-id="${d.id}"><span class="d-cat">${ic(k.ic)}${k.name}${d.room?' · '+esc(d.room):''}</span><span class="d-t">${esc(d.title)}</span>${d.note?`<span class="d-note">${esc(d.note)}</span>`:''}<span class="d-m ${d.done?'ok':''}">${d.done?'Poprawione '+fmtDate(d.doneAt):'Wpisano '+fmtDate(d.createdAt)}${ph.length?` · ${ph.length} ${plural(ph.length,'zdjęcie','zdjęcia','zdjęć')}`:''}</span></button>
+    ${ph.length?`<div class="thumbs">${ph.map((r,i)=>`<button class="th" data-act="photo" data-id="${d.id}" data-i="${i}" aria-label="Pokaż zdjęcie ${i+1}">${imgTag(r)}</button>`).join('')}</div>`:''}
+  </article>`;
+}
+
+function viewUnit(){
+  const u=Store.data.units.get(S.unitId);
+  if(!u){S.view=Store.data.projects.has(S.projectId)?'project':'home';return S.view==='project'?viewProject():viewHome()}
+  const f=Store.data.floors.get(u.floorId),p=Store.data.projects.get(u.projectId);
+  const all=defectsOfUnit(u.id),c=counts(all);
+  const list=all.filter(d=>S.unitFilter==='all'||(S.unitFilter==='open'?!d.done:d.done));
+  const seq=unitSeq(u.projectId).filter(x=>AUX.has(u.kind)?x.kind===u.kind:!AUX.has(x.kind)),i=seq.findIndex(x=>x.id===u.id),prev=seq[i-1],next=seq[i+1];
+  const seg=[['all','Wszystkie',c.total],['open','Do poprawy',c.open],['done','Poprawione',c.done]].map(([k,l,n])=>`<button data-act="ufilter" data-f="${k}" aria-pressed="${S.unitFilter===k}">${l} <span>${n}</span></button>`).join('');
+  return `${top({title:u.name,sub:esc([AUX.has(u.kind)&&KIND[u.kind],u.klatka&&kLabel(u.klatka),f&&f.name,p&&p.name].filter(Boolean).join(' · ')),actions:`<button class="ib" data-act="edit-unit" data-id="${u.id}" aria-label="Edytuj lokal">${ic(UI.more)}</button>`})}
+  <main class="main gut">
+    ${c.total?`<div class="seg" role="group" aria-label="Filtr">${seg}</div>`:''}
+    ${list.length?`<div class="dl">${list.map(d=>defectItem(d)).join('')}</div>`:c.total?`<p class="hint">Brak pozycji w tym filtrze.</p>`:`<div class="empty"><h3>Brak usterek</h3><p>Wpisz pierwszą usterkę przyciskiem na dole. Rodzaj i typowe usterki wybierasz z listy, zdjęcie robisz od razu telefonem.</p></div>`}
+  </main>
+  <div class="bar gut"><div class="bar-in">
+    <button class="nav-u" data-act="goto-unit" data-id="${prev?prev.id:''}" ${prev?'':'disabled'} aria-label="Poprzedni lokal">${ic(UI.chevl)}${prev?esc(short(prev.name)):''}</button>
+    <button class="btn pri grow" data-act="add-defect">${ic(UI.plus)}Dodaj usterkę</button>
+    <button class="nav-u" data-act="goto-unit" data-id="${next?next.id:''}" ${next?'':'disabled'} aria-label="Następny lokal">${next?esc(short(next.name)):''}${ic(UI.chev)}</button>
+  </div></div>`;
+}
+const short=s=>s.length>7?s.slice(0,6)+'…':s;
+
+function reportData(p){
+  const R=S.report,fl=floorsOf(p.id),kl=klatkiOf(p.id);
+  if(R.floor!=='all'&&!fl.some(f=>f.id===R.floor))R.floor='all';
+  if(R.klatka!=='all'&&!kl.includes(R.klatka))R.klatka='all';
+  const st=d=>R.status==='all'||(R.status==='open'?!d.done:d.done);
+  let ds=defectsOfProject(p.id);
+  if(R.klatka!=='all')ds=ds.filter(d=>unitKl(d.unitId)===R.klatka);
+  const byStatus=ds.filter(st);
+  if(R.floor!=='all')ds=ds.filter(d=>d.floorId===R.floor);
+  const forChips=ds.filter(st);
+  if(R.cat!=='all')ds=ds.filter(d=>d.cat===R.cat);
+  const summary=ds;
+  const fo=new Map(fl.map((f,i)=>[f.id,i])),U=Store.data.units;
+  const rows=ds.filter(st).sort((a,b)=>{const ua=U.get(a.unitId)||{},ub=U.get(b.unitId)||{};return ((fo.get(a.floorId)??0)-(fo.get(b.floorId)??0))||(kl.indexOf(ua.klatka||'')-kl.indexOf(ub.klatka||''))||((ua.order||0)-(ub.order||0))||cmp(ua.name,ub.name)||((a.createdAt||0)-(b.createdAt||0))});
+  return {fl,kl,rows,byStatus,forChips,summary};
+}
+function filterDesc(){
+  const R=S.report;return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka)};
+}
+function viewReport(){
+  const p=Store.data.projects.get(S.projectId);if(!p){S.view='home';return viewHome()}
+  const R=S.report,{fl,kl,rows,byStatus,forChips}=reportData(p);
+  const all=defectsOfProject(p.id);const usedCats=CATS.filter(k=>all.some(d=>d.cat===k.id));
+  const chipN=id=>forChips.filter(d=>id==='all'||d.cat===id).length;
+  const chips=[`<button class="chip" data-act="rcat" data-cat="all" aria-pressed="${R.cat==='all'}">Wszystkie<span class="n ${chipN('all')?'':'z'}">${chipN('all')}</span></button>`].concat(usedCats.map(k=>`<button class="chip" data-act="rcat" data-cat="${k.id}" aria-pressed="${R.cat===k.id}">${ic(k.ic)}${k.name}<span class="n ${chipN(k.id)?'':'z'}">${chipN(k.id)}</span></button>`)).join('');
+  const seg=[['open','Do poprawy'],['done','Poprawione'],['all','Wszystkie']].map(([k,l])=>`<button data-act="rstatus" data-s="${k}" aria-pressed="${R.status===k}">${l}</button>`).join('');
+  // matrix: category x floor, counts by status
+  const flAsc=fl;const mxCats=CATS.filter(k=>byStatus.some(d=>d.cat===k.id));
+  let mx='';
+  if(mxCats.length){
+    const cell=(cat,fid)=>byStatus.filter(d=>d.cat===cat&&(fid==null||d.floorId===fid)).length;
+    mx=`<div class="tw"><table class="mx ${R.status==='done'?'done':''}"><thead><tr><th>Rodzaj</th>${flAsc.map(f=>`<th title="${esc(f.name)}">${lvlCode(f.level)}</th>`).join('')}<th class="t">Σ</th></tr></thead><tbody>${mxCats.map(k=>`<tr data-act="rcat-toggle" data-cat="${k.id}" class="${R.cat===k.id?'sel':''}"><td>${ic(k.ic)}${k.name}</td>${flAsc.map(f=>{const n=cell(k.id,f.id);return `<td class="${n?'h':'z'}">${n||'·'}</td>`}).join('')}<td class="t">${cell(k.id,null)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Razem</td>${flAsc.map(f=>`<td>${byStatus.filter(d=>d.floorId===f.id).length}</td>`).join('')}<td>${byStatus.length}</td></tr></tfoot></table></div>`;
+  }
+  // list grouped
+  let list='',cf=null,cu=null;
+  const perFloor=new Map();for(const d of rows)perFloor.set(d.floorId,(perFloor.get(d.floorId)||0)+1);
+  for(const d of rows){
+    if(d.floorId!==cf){cf=d.floorId;cu=null;const f=Store.data.floors.get(cf);const n=perFloor.get(cf);list+=`<div class="rg-f">${esc(f?f.name:'')}<span>${n} ${plural(n,'pozycja','pozycje','pozycji')}</span></div>`}
+    if(d.unitId!==cu){cu=d.unitId;const u=Store.data.units.get(cu)||{};list+=`<div class="rg-u"><button data-act="open-unit" data-id="${cu}">${esc(u.name||'')}</button>${u.klatka?`<span>${esc(kLabel(u.klatka))}</span>`:''}</div>`}
+    list+=defectItem(d,true);
+  }
+  const fd=filterDesc();
+  const flOpts=`<option value="all">Wszystkie kondygnacje</option>`+fl.map(f=>`<option value="${f.id}" ${R.floor===f.id?'selected':''}>${esc(lvlCode(f.level)+'  '+f.name)}</option>`).join('');
+  return `${top({title:'Zestawienie usterek',sub:esc(p.name)})}
+  <main class="main gut">
+    ${mx?`<section class="sec"><div class="sh"><h2>${R.status==='done'?'Poprawione':R.status==='open'?'Do poprawy':'Wszystkie'} – rodzaj × kondygnacja</h2></div>${mx}<p class="hint">Dotknij wiersza, żeby zawęzić zestawienie do jednego rodzaju.</p></section>`:''}
+    <section class="sec"><div class="sh"><h2>Filtr</h2></div>
+      <div class="seg" role="group" aria-label="Status">${seg}</div>
+      <div class="chips">${chips}</div>
+      <div class="${kl.length?'grid2':''}">${kl.length?`<div><label class="vh" for="r-kl">Klatka</label><select class="inp" id="r-kl"><option value="all">Wszystkie klatki</option>${kl.map(k=>`<option value="${esc(k)}" ${R.klatka===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select></div>`:''}<div><label class="vh" for="r-floor">Kondygnacja</label><select class="inp" id="r-floor">${flOpts}</select></div></div>
+    </section>
+    <section class="sec"><div class="sh"><h2>${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')} · ${esc(fd.cat)}${fd.klatka?' · '+esc(fd.klatka):''}</h2></div>
+      ${rows.length?`<div class="dl">${list}</div>`:`<p class="hint">Brak usterek dla wybranego filtra.</p>`}
+      <label class="checkline"><input type="checkbox" id="r-photos" data-act="rphotos" ${R.photos?'checked':''}>Dołącz zdjęcia do PDF</label>
+    </section>
+  </main>
+  <div class="bar gut"><div class="bar-in">
+    <button class="btn pri grow" data-act="exp-pdf" ${rows.length?'':'disabled'}>${ic(UI.pdf)}PDF</button>
+    <button class="btn grow" data-act="exp-csv" ${rows.length?'':'disabled'}>${ic(UI.table)}Excel</button>
+    <button class="btn grow" data-act="exp-txt" ${rows.length?'':'disabled'}>${ic(UI.copy)}Tekst</button>
+  </div></div>`;
+}
+
+function viewSettings(){
+  const D=Store.data;const nPh=[...D.defects.values()].reduce((a,d)=>a+(d.photos||[]).length,0);
+  const where=Store.mode==='cloud'?'Dane są zapisane w chmurze, przy tej stronie na Twoim koncie claude.ai. Widzisz je na telefonie i na komputerze. Zdjęcia też są w chmurze.':Store.mode==='local'?'Dane są zapisane tylko w tej przeglądarce na tym urządzeniu. Raz na jakiś czas zrób kopię zapasową, zwłaszcza przed zmianą telefonu.':'Ta przeglądarka nie zapisuje danych – po zamknięciu znikną.';
+  const install=!Env.artifact&&!matchMedia('(display-mode: standalone)').matches;
+  return `${top({title:'Ustawienia'})}
+  <main class="main gut">
+    <section class="sec"><div class="sh"><h2>Gdzie są dane</h2></div><div class="note">${ic(UI.info)}<p>${where}</p></div>
+      <dl class="kv"><dt>Budowy</dt><dd>${D.projects.size}</dd><dt>Lokale</dt><dd>${D.units.size}</dd><dt>Usterki</dt><dd>${D.defects.size}</dd><dt>Zdjęcia</dt><dd>${nPh}</dd></dl></section>
+    <section class="sec"><div class="sh"><h2>Kopia zapasowa</h2></div>
+      <p class="hint">Jeden plik .json ze wszystkimi budowami i zdjęciami. Wczytanie kopii dopisuje dane, nic nie kasuje.</p>
+      <div class="row"><button class="btn" data-act="backup">${ic(UI.down)}Zapisz kopię</button><button class="btn" data-act="restore">${ic(UI.upload)}Wczytaj kopię</button><input type="file" id="restore-file" class="vh" accept="application/json,.json" tabindex="-1"></div></section>
+    <section class="sec"><div class="sh"><h2>Przykład</h2></div><p class="hint">Gotowa budowa z 16 mieszkaniami i kilkudziesięcioma usterkami do przećwiczenia.</p><div class="row"><button class="btn" data-act="load-demo">Wczytaj przykładową budowę</button></div></section>
+    ${install?`<section class="sec"><div class="sh"><h2>Ikona na telefonie</h2></div><p class="hint">iPhone: Safari → Udostępnij → „Do ekranu początkowego”. Android: Chrome → menu ⋮ → „Zainstaluj aplikację”. Aplikacja działa wtedy jak zwykła apka, także bez internetu.</p></section>`:''}
+  </main>`;
+}
+
+/* ---------- sheets ---------- */
+let sheetClose=null;
+function openSheet(html,{full=false,onMount,onClose,backdrop=true}={}){
+  closeSheet();
+  const root=$('#sheet-root');
+  root.innerHTML=`<div class="sheet-back" ${backdrop?'data-close':''}></div><div class="sheet ${full?'full':''}" role="dialog" aria-modal="true">${html}</div>`;
+  root.hidden=false;document.body.classList.add('locked');
+  const el=$('.sheet',root);sheetClose=onClose||null;
+  root.onclick=e=>{if(e.target.closest('[data-close]'))closeSheet()};
+  onMount&&onMount(el);hydrate(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.add('in')));
+  return el;
+}
+function closeSheet(){
+  const root=$('#sheet-root');if(root.hidden)return;
+  const fn=sheetClose;sheetClose=null;fn&&fn();
+  root.classList.remove('in');root.innerHTML='';root.hidden=true;root.onclick=null;document.body.classList.remove('locked');
+}
+const sheetHead=(title,ctx='')=>`<div class="sh-h gut"><button class="ib" data-close aria-label="Zamknij">${ic(UI.x)}</button><h2>${esc(title)}</h2>${ctx?`<span class="ctx">${esc(ctx)}</span>`:''}</div>`;
+function armDelete(btn,label,fn){
+  btn.addEventListener('click',()=>{if(btn.classList.contains('armed')){fn();return}btn.classList.add('armed');btn.innerHTML=ic(UI.trash)+esc(label);setTimeout(()=>{if(btn.isConnected&&btn.classList.contains('armed')){btn.classList.remove('armed');btn.innerHTML=btn.dataset.orig}},5000)});
+  btn.dataset.orig=btn.innerHTML;
+}
+
+function openDefectForm(unitId,defectId){
+  const u=Store.data.units.get(unitId);if(!u)return;
+  const orig=defectId?Store.data.defects.get(defectId):null;
+  const st={cat:orig?orig.cat:Prefs.get('lastCat',''),photos:orig?[...(orig.photos||[])]:[],done:!!(orig&&orig.done),added:[],removed:[],busy:0,saved:false};
+  if(st.cat&&!CAT[st.cat])st.cat='';
+  const canPhoto=!(Store.mode==='cloud'&&!CloudBackend.assets);
+  const html=`${sheetHead(orig?'Edycja usterki':'Nowa usterka',u.name)}
+  <div class="sh-b gut">
+    <div class="fld"><span class="lbl">Rodzaj</span><div class="cats" id="f-cats"></div></div>
+    <div class="fld"><label for="f-title">Usterka</label><input class="inp" id="f-title" autocomplete="off" enterkeyhint="done" placeholder="Wybierz z listy poniżej albo wpisz"><div class="chips sm" id="f-typ"></div></div>
+    <div class="fld"><label for="f-room">Pomieszczenie</label><input class="inp" id="f-room" autocomplete="off" enterkeyhint="done" placeholder="np. Kuchnia"><div class="chips sm" id="f-rooms"></div></div>
+    <div class="fld"><label for="f-note">Uwagi</label><textarea class="inp" id="f-note" rows="2" placeholder="Dokładne miejsce, wymiar, kto ma poprawić…"></textarea></div>
+    <div class="fld"><span class="lbl">Zdjęcia</span><div class="ph" id="f-ph"></div>
+      ${canPhoto?`<div class="row"><button type="button" class="btn sm" id="f-cam-b">${ic(UI.camera)}Zrób zdjęcie</button><button type="button" class="btn sm" id="f-gal-b">${ic(UI.image)}Z galerii</button>
+      <input type="file" accept="image/*" capture="environment" class="vh" id="f-cam" tabindex="-1"><input type="file" accept="image/*" multiple class="vh" id="f-gal" tabindex="-1"></div>`:`<p class="hint">Dodawanie zdjęć jest tu dostępne tylko dla właściciela i edytorów.</p>`}
+    </div>
+    <button type="button" class="tgl" id="f-done" role="checkbox" aria-checked="false"><i></i><span>Poprawione</span></button>
+    <p class="err" id="f-err" hidden></p>
+    ${orig?`<button type="button" class="btn danger" id="f-del">${ic(UI.trash)}Usuń usterkę</button>`:''}
+  </div>
+  <div class="sh-f gut">${orig?'':`<button class="btn" id="f-next">Zapisz + następna</button>`}<button class="btn pri grow" id="f-save">${ic(UI.check)}Zapisz</button></div>`;
+  openSheet(html,{full:true,backdrop:false,onClose:()=>{if(!st.saved)st.added.forEach(r=>B.delPhoto(r))},onMount:el=>{
+    const q=s=>el.querySelector(s),tI=q('#f-title'),rI=q('#f-room'),nI=q('#f-note');
+    tI.value=orig?orig.title:'';rI.value=orig?orig.room||'':'';nI.value=orig?orig.note||'':'';
+    const paintCats=()=>{q('#f-cats').innerHTML=CATS.map(k=>`<button type="button" class="cat" data-cat="${k.id}" aria-pressed="${st.cat===k.id}">${ic(k.ic)}<span>${k.name}</span></button>`).join('')};
+    const paintTyp=()=>{const k=CAT[st.cat],v=tI.value.trim();q('#f-typ').innerHTML=k?k.items.map(t=>`<button type="button" class="chip" data-t="${esc(t)}" aria-pressed="${v===t}">${esc(t)}</button>`).join(''):'<p class="hint">Najpierw wybierz rodzaj – pojawią się typowe usterki.</p>'};
+    const paintRooms=()=>{const v=rI.value.trim();const list=isFlat(u)?ROOMS:['Klatka schodowa','Korytarz','Garaż','Komórka','Brama / drzwi','Elewacja','Dach','Wejście'];q('#f-rooms').innerHTML=list.map(r=>`<button type="button" class="chip" data-r="${esc(r)}" aria-pressed="${v===r}">${esc(r)}</button>`).join('')};
+    const paintPh=()=>{const box=q('#f-ph');box.innerHTML=st.photos.map((r,i)=>`<div class="ph-i">${imgTag(r)}<button type="button" class="ph-x" data-rm="${i}" aria-label="Usuń zdjęcie">${ic(UI.x)}</button></div>`).join('')+(st.busy?'<div class="ph-i"><span class="spin"></span></div>'.repeat(st.busy):'');hydrate(box)};
+    const paintDone=()=>{const b=q('#f-done');b.setAttribute('aria-checked',String(st.done));b.querySelector('i').innerHTML=st.done?ic(UI.check):''};
+    const err=m=>{const e=q('#f-err');e.textContent=m;e.hidden=!m;if(m)e.scrollIntoView({block:'nearest',behavior:'smooth'})};
+    paintCats();paintTyp();paintRooms();paintPh();paintDone();
+    tI.addEventListener('input',()=>{paintTyp();err('')});rI.addEventListener('input',paintRooms);
+    el.addEventListener('click',e=>{
+      const c=e.target.closest('[data-cat]');if(c){const pk=CAT[st.cat];if(pk&&pk.items.includes(tI.value.trim()))tI.value='';st.cat=c.dataset.cat;paintCats();paintTyp();err('');return}
+      const t=e.target.closest('[data-t]');if(t){tI.value=t.dataset.t;paintTyp();err('');return}
+      const r=e.target.closest('[data-r]');if(r){rI.value=rI.value.trim()===r.dataset.r?'':r.dataset.r;paintRooms();return}
+      const rm=e.target.closest('[data-rm]');if(rm){const i=+rm.dataset.rm,ref=st.photos[i];st.photos.splice(i,1);const ai=st.added.indexOf(ref);if(ai>=0){st.added.splice(ai,1);B.delPhoto(ref)}else st.removed.push(ref);paintPh();return}
+      const img=e.target.closest('.ph-i img');if(img){const i=[...q('#f-ph').querySelectorAll('img')].indexOf(img);openLightbox(st.photos,i);return}
+    });
+    q('#f-done').addEventListener('click',()=>{st.done=!st.done;paintDone()});
+    if(canPhoto){
+      q('#f-cam-b').addEventListener('click',()=>q('#f-cam').click());q('#f-gal-b').addEventListener('click',()=>q('#f-gal').click());
+      const onFiles=async inp=>{const files=[...inp.files];inp.value='';for(const file of files){st.busy++;paintPh();try{const blob=await compressPhoto(file);const ref=await B.addPhoto(blob);if(ref.startsWith('l:'))Store.urls.set(ref,URL.createObjectURL(blob));if(!el.isConnected){B.delPhoto(ref);return}st.photos.push(ref);st.added.push(ref)}catch(e){console.warn(e);toast(e&&e.code==='too_large'?'Zdjęcie jest za duże.':'Nie udało się dodać zdjęcia.')}finally{st.busy--;if(el.isConnected)paintPh()}}};
+      q('#f-cam').addEventListener('change',e=>onFiles(e.target));q('#f-gal').addEventListener('change',e=>onFiles(e.target));
+    }
+    const collect=()=>{
+      const title=tI.value.trim();
+      if(!st.cat){err('Wybierz rodzaj usterki.');return null}
+      if(!title){err('Wybierz usterkę z listy albo wpisz własny opis.');return null}
+      if(st.busy){err('Poczekaj chwilę, zdjęcia jeszcze się zapisują.');return null}
+      const now=Date.now();
+      return {id:orig?orig.id:uid(),projectId:u.projectId,floorId:u.floorId,unitId:u.id,cat:st.cat,title,room:rI.value.trim(),note:nI.value.trim(),photos:[...st.photos],done:st.done,createdAt:orig?orig.createdAt:now,doneAt:st.done?(orig&&orig.done&&orig.doneAt?orig.doneAt:now):null,updatedAt:now};
+    };
+    q('#f-save').addEventListener('click',()=>{const d=collect();if(!d)return;Prefs.set('lastCat',d.cat);persist('defects',d);st.removed.forEach(r=>B.delPhoto(r));st.saved=true;closeSheet();toast(orig?'Zapisano zmiany':'Dodano usterkę')});
+    const nx=q('#f-next');if(nx)nx.addEventListener('click',()=>{const d=collect();if(!d)return;Prefs.set('lastCat',d.cat);persist('defects',d);st.added=[];st.photos=[];st.done=false;tI.value='';nI.value='';paintTyp();paintPh();paintDone();q('.sh-b').scrollTo({top:0,behavior:'smooth'});toast('Dodano. Wpisz następną usterkę.')});
+    const del=q('#f-del');if(del)armDelete(del,'Dotknij ponownie, aby usunąć',()=>{st.saved=true;st.added.forEach(r=>B.delPhoto(r));deleteDefects([Object.assign({},orig,{photos:[...new Set([...(orig.photos||[]),...st.photos])]})]);closeSheet();toast('Usunięto usterkę')});
+  }});
+}
+
+function genFields(){return `
+  <div class="grid2"><div class="fld"><label for="g-below">Kondygnacje podziemne</label><input class="inp" id="g-below" type="number" inputmode="numeric" min="0" max="5" value="0"></div>
+  <div class="fld"><label for="g-above">Nadziemne (z parterem)</label><input class="inp" id="g-above" type="number" inputmode="numeric" min="1" max="40" value="4"></div></div>
+  <div class="grid2"><div class="fld"><label for="g-kl">Liczba klatek</label><input class="inp" id="g-kl" type="number" inputmode="numeric" min="1" max="8" value="1"></div>
+  <div class="fld"><label for="g-per">Mieszkań na piętrze w klatce</label><input class="inp" id="g-per" type="number" inputmode="numeric" min="0" max="40" value="4"></div></div>
+  <div class="grid2"><div class="fld"><label for="g-prefix">Oznaczenie</label><input class="inp" id="g-prefix" value="M" maxlength="6"></div>
+  <div class="fld"><label for="g-num">Numeracja</label><select class="inp" id="g-num"><option value="cont">Ciągła (M1, M2…)</option><option value="floor">Z piętrem (M1.1…)</option></select></div></div>
+  <label class="checkline"><input type="checkbox" id="g-common" checked>Klatka schodowa na każdej kondygnacji</label>
+  <div class="sec" id="g-under" hidden>
+    <div class="grid2"><div class="fld"><label for="g-gar">Garaż pod budynkiem</label><select class="inp" id="g-gar"><option value="hall">Jedna hala garażowa</option><option value="indiv">Garaże indywidualne</option><option value="none">Bez garażu</option></select></div>
+    <div class="fld" id="g-garn-f" hidden><label for="g-garn">Garaży na poziomie</label><input class="inp" id="g-garn" type="number" inputmode="numeric" min="1" max="300" value="20"></div></div>
+    <div class="fld"><label for="g-ku">Komórki lokatorskie na −1 (szt. w każdej klatce)</label><input class="inp" id="g-ku" type="number" inputmode="numeric" min="0" max="200" value="0"></div>
+  </div>
+  <label class="checkline"><input type="checkbox" id="g-kf">Komórki lokatorskie na piętrach</label>
+  <div class="fld" id="g-kfn-f" hidden><label for="g-kfn">Komórek na kondygnacji w każdej klatce</label><input class="inp" id="g-kfn" type="number" inputmode="numeric" min="1" max="50" value="2"></div>
+  <p class="preview" id="g-prev"></p>`}
+function genRead(el){const q=x=>el.querySelector(x),n=(x,min,max,d)=>{const v=parseInt(q(x).value,10);return isNaN(v)?d:Math.max(min,Math.min(max,v))};
+  return {below:n('#g-below',0,5,0),above:n('#g-above',1,40,4),kl:n('#g-kl',1,8,1),per:n('#g-per',0,40,4),prefix:q('#g-prefix').value.trim(),num:q('#g-num').value,common:q('#g-common').checked,
+    gar:q('#g-gar').value,garn:n('#g-garn',1,300,20),ku:n('#g-ku',0,200,0),kf:q('#g-kf').checked,kfn:n('#g-kfn',1,50,2)}}
+function genBuild(pid,o){
+  const items=[],now=Date.now(),K=o.kl||1,letters='ABCDEFGH'.slice(0,K).split(''),kls=K>1?letters:[''];
+  let n=1,gn=1,kn=1,first='',last='',flats=0;const fids={},ord={};
+  for(let l=-o.below;l<o.above;l++){const fid=uid();fids[l]=fid;items.push(['floors',{id:fid,projectId:pid,name:floorAutoName(l),level:l,createdAt:now}])}
+  const addU=(l,name,kind,k)=>{ord[l]=ord[l]||0;items.push(['units',{id:uid(),projectId:pid,floorId:fids[l],name,kind,klatka:k,order:ord[l]++,createdAt:now}])};
+  for(let l=-o.below;l<0;l++){
+    if(o.gar==='hall')addU(l,'Hala garażowa','common','');
+    else if(o.gar==='indiv')for(let i=0;i<o.garn;i++)addU(l,'G'+(gn++),'garage','');
+    if(o.common&&K===1)addU(l,'Klatka schodowa','common','');
+  }
+  if(o.below>0)for(const k of kls)for(let i=0;i<o.ku;i++)addU(-1,'K'+(kn++),'storage',k);
+  // flats numbered klatka by klatka, floor by floor (A: M1–M16, B: M17–M32…)
+  for(const k of kls)for(let l=0;l<o.above;l++){
+    for(let i=1;i<=o.per;i++){const nm=o.num==='floor'?`${o.prefix}${l}.${i}`:`${o.prefix}${n++}`;if(!first)first=nm;last=nm;flats++;addU(l,nm,'flat',k)}
+    if(o.common)addU(l,'Klatka schodowa','common',k);
+    if(o.kf)for(let i=0;i<o.kfn;i++)addU(l,'K'+(kn++),'storage',k);
+  }
+  return {items,first,last,flats,garages:gn-1,storages:kn-1,floors:o.below+o.above,klatki:K>1?letters:[]};
+}
+function genPreview(el){
+  const o=genRead(el),g=genBuild('x',o),q=x=>el.querySelector(x);
+  q('#g-under').hidden=o.below===0;q('#g-garn-f').hidden=o.gar!=='indiv';q('#g-kfn-f').hidden=!o.kf;
+  const parts=[`${g.flats} ${plural(g.flats,'mieszkanie','mieszkania','mieszkań')}${g.flats?` (${g.first} – ${g.last})`:''}`];
+  if(o.below&&o.gar==='hall')parts.push('hala garażowa');
+  if(g.garages)parts.push(`${g.garages} ${plural(g.garages,'garaż','garaże','garaży')} (G1 – G${g.garages})`);
+  if(g.storages)parts.push(`${g.storages} ${plural(g.storages,'komórka','komórki','komórek')} (K1 – K${g.storages})`);
+  q('#g-prev').textContent=`Powstanie ${g.floors} ${plural(g.floors,'kondygnacja','kondygnacje','kondygnacji')}${g.klatki.length?`, ${g.klatki.length} ${plural(g.klatki.length,'klatka','klatki','klatek')} (${g.klatki.join(', ')})`:''}: ${parts.join(', ')}.`;
+}
+function genWire(el){genPreview(el);el.addEventListener('input',()=>genPreview(el));el.addEventListener('change',()=>genPreview(el))}
+
+function openProjectForm(pid){
+  const p=pid?Store.data.projects.get(pid):null;
+  let cnt='';if(p){const c=counts(defectsOfProject(p.id));cnt=`${floorsOf(p.id).length} kond., ${unitsOfProject(p.id).length} lokali, ${c.total} usterek`}
+  const html=`${sheetHead(p?'Budowa':'Nowa budowa')}
+  <div class="sh-b gut">
+    <div class="fld"><label for="p-name">Nazwa</label><input class="inp" id="p-name" placeholder="np. Osiedle Słoneczne, budynek A" value="${esc(p?p.name:'')}"></div>
+    <div class="fld"><label for="p-addr">Adres / opis</label><input class="inp" id="p-addr" placeholder="np. ul. Polna 5, Gdańsk" value="${esc(p?p.address||'':'')}"></div>
+    ${p?`<div class="fld"><label for="p-kl">Klatki</label><input class="inp" id="p-kl" placeholder="np. A, B, C" value="${esc(klatkiOf(p.id).join(', '))}"><p class="hint">Oddziel przecinkami. Zostaw puste, jeśli budynek ma jedną klatkę. Lokal przypiszesz do klatki w jego ustawieniach (⋯).</p></div>`:`<label class="checkline"><input type="checkbox" id="p-gen" checked>Od razu utwórz kondygnacje i mieszkania</label><div id="p-genbox" class="sec">${genFields()}</div>`}
+    <p class="err" id="p-err" hidden></p>
+    ${p?`<div class="row"><button type="button" class="btn" id="p-addfloor">${ic(UI.plus)}Dodaj kondygnację</button>${floorsOf(p.id).length?'':`<button type="button" class="btn" id="p-gen2">Generator kondygnacji</button>`}</div>`:''}
+    ${p&&!Env.artifact?`<div class="fld"><span class="lbl">Link do tej budowy (np. do Nozbe)</span><div class="row"><input class="inp" id="p-link" readonly value="${esc(projectLink(p))}" style="flex:1;min-width:0" aria-label="Link do budowy"><button type="button" class="btn" id="p-copy">${ic(UI.copy)}Kopiuj</button></div><p class="hint">Wklej go w zadaniu albo projekcie w Nozbe. Otwiera aplikację od razu na tej budowie (na telefonie, na którym ją założono).</p></div>`:''}
+    ${p?`<button type="button" class="btn danger" id="p-del">${ic(UI.trash)}Usuń budowę</button><p class="hint">Usunięcie skasuje: ${esc(cnt)} razem ze zdjęciami.</p>`:''}
+  </div>
+  <div class="sh-f gut"><button class="btn pri grow" id="p-save">${ic(UI.check)}${p?'Zapisz':'Utwórz budowę'}</button></div>`;
+  openSheet(html,{full:!p,onMount:el=>{
+    const q=s=>el.querySelector(s);
+    if(!p){genWire(el);q('#p-gen').addEventListener('change',e=>{q('#p-genbox').hidden=!e.target.checked})}
+    q('#p-save').addEventListener('click',()=>{
+      const name=q('#p-name').value.trim(),address=q('#p-addr').value.trim();
+      if(!name){const e=q('#p-err');e.textContent='Wpisz nazwę budowy.';e.hidden=false;q('#p-name').focus();return}
+      if(p){persist('projects',Object.assign({},p,{name,address,klatki:parseKlatki(q('#p-kl').value),updatedAt:Date.now()}));closeSheet();toast('Zapisano');return}
+      const id=uid();const proj={id,name,address,klatki:[],createdAt:Date.now()};const items=[['projects',proj]];
+      if(q('#p-gen').checked){const g=genBuild(id,genRead(el));proj.klatki=g.klatki;items.push(...g.items)}
+      persistMany(items);closeSheet();go('project',{projectId:id});
+    });
+    if(p){q('#p-addfloor').addEventListener('click',()=>{closeSheet();openFloorForm(p.id,null)});const g2=q('#p-gen2');if(g2)g2.addEventListener('click',()=>{closeSheet();openGenerator(p.id)});
+      const cp=q('#p-copy');if(cp)cp.addEventListener('click',async()=>{const v=q('#p-link').value;try{await navigator.clipboard.writeText(v);toast('Skopiowano link')}catch(e){q('#p-link').select();toast('Zaznaczono – skopiuj ręcznie')}})}
+    if(p)armDelete(q('#p-del'),'Dotknij ponownie – usuń na stałe',()=>{deleteProject(p);closeSheet();stack.length=0;S.view='home';render();toast('Usunięto budowę')});
+  }});
+}
+function openGenerator(pid){
+  const html=`${sheetHead('Generator kondygnacji')}<div class="sh-b gut">${genFields()}</div><div class="sh-f gut"><button class="btn pri grow" id="g-go">${ic(UI.check)}Utwórz</button></div>`;
+  openSheet(html,{full:true,onMount:el=>{genWire(el);el.querySelector('#g-go').addEventListener('click',()=>{
+    const g=genBuild(pid,genRead(el)),p=Store.data.projects.get(pid),items=[...g.items];
+    if(p&&g.klatki.length)items.push(['projects',Object.assign({},p,{klatki:[...new Set([...(p.klatki||[]),...g.klatki])]})]);
+    persistMany(items);closeSheet();toast('Utworzono kondygnacje')})}});
+}
+function klSelect(id,pid,cur){const kl=klatkiOf(pid);if(!kl.length)return '';return `<select class="inp" id="${id}" aria-label="Klatka"><option value="">Bez klatki (cały budynek)</option>${kl.map(k=>`<option value="${esc(k)}" ${cur===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select>`}
+function openFloorForm(pid,fid){
+  const f=fid?Store.data.floors.get(fid):null;const fl=floorsOf(pid);
+  const lvl=f?f.level:(fl.length?Math.max(...fl.map(x=>x.level))+1:0);
+  const us=f?unitsOf(f.id):[];const nd=us.reduce((a,u)=>a+defectsOfUnit(u.id).length,0);
+  const kl=klatkiOf(pid),sk=selKlatka(pid),defK=sk!=='all'?sk:(kl[0]||'');const defKind=f&&f.level<0?'garage':'flat';
+  const html=`${sheetHead(f?'Kondygnacja':'Nowa kondygnacja',f?lvlCode(f.level):'')}
+  <div class="sh-b gut">
+    <div class="grid2"><div class="fld"><label for="fl-level">Poziom</label><input class="inp" id="fl-level" type="number" inputmode="numeric" value="${lvl}"></div>
+    <div class="fld"><label for="fl-name">Nazwa</label><input class="inp" id="fl-name" value="${esc(f?f.name:floorAutoName(lvl))}"></div></div>
+    <p class="hint">Poziom: 0 = parter, 1 = pierwsze piętro, −1 = garaż podziemny.</p>
+    ${f?`<div class="fld"><span class="lbl">Dodaj lokal na tej kondygnacji</span>
+      <div class="grid2"><select class="inp" id="fl-kind" aria-label="Rodzaj lokalu">${Object.entries(KIND).map(([k,v])=>`<option value="${k}" ${k===defKind?'selected':''}>${v}</option>`).join('')}</select><input class="inp" id="fl-unit" value="${esc(nextUnitName(pid,defKind))}" aria-label="Nazwa lokalu"></div>
+      ${klSelect('fl-kl',pid,defK)}
+      <div class="row"><button class="btn" id="fl-add">${ic(UI.plus)}Dodaj lokal</button></div></div>
+    <button type="button" class="btn danger" id="fl-del">${ic(UI.trash)}Usuń kondygnację</button><p class="hint">Usunięcie skasuje ${us.length} ${plural(us.length,'lokal','lokale','lokali')} i ${nd} ${plural(nd,'usterkę','usterki','usterek')}.</p>`:''}
+  </div>
+  <div class="sh-f gut"><button class="btn pri grow" id="fl-save">${ic(UI.check)}${f?'Zapisz':'Dodaj kondygnację'}</button></div>`;
+  openSheet(html,{onMount:el=>{
+    const q=s=>el.querySelector(s);let touched=!!f;
+    q('#fl-name').addEventListener('input',()=>{touched=true});
+    q('#fl-level').addEventListener('input',()=>{if(!touched){const v=parseInt(q('#fl-level').value,10);if(!isNaN(v))q('#fl-name').value=floorAutoName(v)}});
+    q('#fl-save').addEventListener('click',()=>{
+      const level=parseInt(q('#fl-level').value,10),name=q('#fl-name').value.trim();if(isNaN(level)||!name){toast('Podaj poziom i nazwę.');return}
+      persist('floors',f?Object.assign({},f,{level,name}):{id:uid(),projectId:pid,level,name,createdAt:Date.now()});closeSheet();toast(f?'Zapisano':'Dodano kondygnację');
+    });
+    if(f){
+      let nameTouched=false;q('#fl-unit').addEventListener('input',()=>{nameTouched=true});
+      q('#fl-kind').addEventListener('change',()=>{if(!nameTouched)q('#fl-unit').value=nextUnitName(pid,q('#fl-kind').value)});
+      q('#fl-add').addEventListener('click',()=>{const name=q('#fl-unit').value.trim(),kind=q('#fl-kind').value;if(!name){toast('Wpisz nazwę lokalu.');return}const ks=q('#fl-kl'),klatka=ks?ks.value:'';const ord=unitsOf(f.id).reduce((m,u)=>Math.max(m,u.order||0),-1)+1;persist('units',{id:uid(),projectId:pid,floorId:f.id,name,kind,klatka,order:ord,createdAt:Date.now()});toast('Dodano: '+name+(klatka?' ('+kLabel(klatka)+')':''));nameTouched=false;q('#fl-unit').value=nextUnitName(pid,kind)});
+      armDelete(q('#fl-del'),'Dotknij ponownie, aby usunąć',()=>{deleteFloor(f);closeSheet();toast('Usunięto kondygnację')});
+    }
+  }});
+}
+function nextUnitName(pid,kind='flat'){
+  if(kind==='common')return 'Klatka schodowa';
+  let pre={flat:'M',garage:'G',storage:'K'}[kind]||'M',max=0;
+  for(const u of unitsOfProject(pid)){if((u.kind||'flat')!==kind)continue;const m=/^(\D*)(\d+)$/.exec(u.name.trim());if(m&&+m[2]>=max){max=+m[2];pre=m[1]}}
+  return pre+(max+1);
+}
+function projectLink(p){return location.origin+location.pathname+'#b-'+slug(p.name).toLowerCase()}
+function openFromHash(){
+  const h=decodeURIComponent((location.hash||'').slice(1));if(!h.startsWith('b-'))return;
+  const want=h.slice(2).toLowerCase(),p=[...Store.data.projects.values()].find(x=>slug(x.name).toLowerCase()===want);
+  if(p){stack.length=0;S.view='home';go('project',{projectId:p.id})}else toast('Tej budowy nie ma jeszcze na tym urządzeniu. Załóż ją przyciskiem „Nowa budowa”.');
+}
+window.addEventListener('hashchange',()=>{if(Store.ready)openFromHash()});
+function openUnitForm(uid_,floorId){
+  const u=uid_?Store.data.units.get(uid_):null;const f=Store.data.floors.get(u?u.floorId:floorId);if(!f)return;
+  const nd=u?defectsOfUnit(u.id).length:0;let kind=u?u.kind||'flat':'flat';
+  const sk=selKlatka(f.projectId),curK=u?u.klatka||'':(sk!=='all'?sk:(klatkiOf(f.projectId)[0]||''));
+  const ksel=klSelect('u-kl',f.projectId,curK);
+  const html=`${sheetHead(u?'Lokal':'Nowy lokal',f.name)}
+  <div class="sh-b gut">
+    <div class="fld"><label for="u-name">Nazwa / numer</label><input class="inp" id="u-name" value="${esc(u?u.name:nextUnitName(f.projectId))}"></div>
+    <div class="seg" role="group" aria-label="Rodzaj lokalu"><button data-k="flat">Mieszkanie</button><button data-k="garage">Garaż</button><button data-k="storage">Komórka</button><button data-k="common">Wspólna</button></div>
+    ${ksel?`<div class="fld"><label for="u-kl">Klatka</label>${ksel}</div>`:''}
+    ${u?`<button type="button" class="btn danger" id="u-del">${ic(UI.trash)}Usuń lokal</button><p class="hint">Usunięcie skasuje ${nd} ${plural(nd,'usterkę','usterki','usterek')} tego lokalu.</p>`:''}
+  </div>
+  <div class="sh-f gut"><button class="btn pri grow" id="u-save">${ic(UI.check)}${u?'Zapisz':'Dodaj lokal'}</button></div>`;
+  openSheet(html,{onMount:el=>{
+    const q=s=>el.querySelector(s);const paint=()=>$$('.seg button',el).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===kind)));paint();
+    let nameTouched=!!u;q('#u-name').addEventListener('input',()=>{nameTouched=true});
+    $$('.seg button',el).forEach(b=>b.addEventListener('click',()=>{kind=b.dataset.k;paint();if(!nameTouched)q('#u-name').value=nextUnitName(f.projectId,kind)}));
+    q('#u-save').addEventListener('click',()=>{const name=q('#u-name').value.trim();if(!name){toast('Wpisz nazwę lokalu.');return}
+      const ks=q('#u-kl'),klatka=ks?ks.value:(u?u.klatka||'':'');
+      if(u)persist('units',Object.assign({},u,{name,kind,klatka}));else{const ord=unitsOf(f.id).reduce((m,x)=>Math.max(m,x.order||0),-1)+1;persist('units',{id:uid(),projectId:f.projectId,floorId:f.id,name,kind,klatka,order:ord,createdAt:Date.now()})}
+      closeSheet();toast(u?'Zapisano':'Dodano lokal')});
+    if(u)armDelete(q('#u-del'),'Dotknij ponownie, aby usunąć',()=>{deleteUnit(u);closeSheet();if(S.view==='unit')back();toast('Usunięto lokal')});
+  }});
+}
+
+/* ---------- lightbox & toast ---------- */
+let lbState=null;
+function openLightbox(refs,i){
+  closeLightbox();if(!refs||!refs.length)return;lbState={refs,i:Math.max(0,i)};
+  const el=document.createElement('div');el.className='lb';el.setAttribute('role','dialog');el.setAttribute('aria-label','Zdjęcie');
+  document.body.appendChild(el);paintLb();
+  el.addEventListener('click',e=>{if(e.target.closest('.lb-x')||e.target===el){closeLightbox();return}if(e.target.closest('.lb-p')){lbState.i=(lbState.i-1+refs.length)%refs.length;paintLb()}else if(e.target.closest('.lb-n')){lbState.i=(lbState.i+1)%refs.length;paintLb()}});
+}
+function paintLb(){const el=$('.lb');if(!el||!lbState)return;const {refs,i}=lbState;el.innerHTML=`${imgTag(refs[i])}<button class="ib lb-x" aria-label="Zamknij">${ic(UI.x)}</button>${refs.length>1?`<button class="ib lb-p" aria-label="Poprzednie">${ic(UI.chevl)}</button><button class="ib lb-n" aria-label="Następne">${ic(UI.chev)}</button><div class="lb-c">${i+1} / ${refs.length}</div>`:''}`;hydrate(el)}
+function closeLightbox(){const el=$('.lb');if(el)el.remove();lbState=null}
+let toastT=0;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('.lb'))closeLightbox();else closeSheet()}else if($('.lb')&&(e.key==='ArrowRight'||e.key==='ArrowLeft')){const n=lbState.refs.length;lbState.i=(lbState.i+(e.key==='ArrowRight'?1:-1)+n)%n;paintLb()}});
+
+/* ---------- exports ---------- */
+async function offerFile(name,blob){
+  if(Env.downloads){
+    try{await Env.downloads.save({filename:name,data:blob});toast('Plik gotowy: '+name)}
+    catch(e){const c=e&&e.code;if(c==='declined')return;if(c==='host_unavailable')toast('Ta aplikacja nie zapisuje plików. Otwórz stronę w przeglądarce.');else toast('Nie udało się zapisać pliku.')}
+    return;
+  }
+  if(Env.artifact){toast('Zapisywanie plików jest tu niedostępne.');return}
+  const url=URL.createObjectURL(blob);const file=new File([blob],name,{type:blob.type});
+  const canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+  const kb=blob.size>1048576?(blob.size/1048576).toFixed(1)+' MB':Math.max(1,Math.round(blob.size/1024))+' kB';
+  openSheet(`${sheetHead('Plik gotowy')}<div class="sh-b gut"><p style="margin:0;overflow-wrap:anywhere"><b>${esc(name)}</b><br><span class="hint">${kb}</span></p>
+    <div class="row">${canShare?`<button class="btn pri" id="o-share">${ic(UI.share)}Udostępnij</button>`:''}<a class="btn ${canShare?'':'pri'}" href="${url}" download="${esc(name)}" id="o-dl">${ic(UI.down)}Pobierz</a>${/\.pdf$/.test(name)?`<a class="btn" href="${url}" target="_blank" rel="noopener">Otwórz</a>`:''}</div>
+    <p class="hint">„Udostępnij” wyśle plik np. przez WhatsApp, SMS albo e-mail do wykonawcy.</p></div>`,{onClose:()=>setTimeout(()=>URL.revokeObjectURL(url),60000),onMount:el=>{
+    const s=el.querySelector('#o-share');if(s)s.addEventListener('click',async()=>{try{await navigator.share({files:[file],title:name})}catch(e){}});
+  }});
+}
+function reportText(p,rows){
+  const fd=filterDesc();const L=[`PROTOKÓŁ USTEREK – ${p.name}`,fdLine(fd),`Stan na ${fmtDate(Date.now())}: ${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')}`];
+  let cf=null,cu=null,lp=0;
+  for(const d of rows){
+    if(d.floorId!==cf){cf=d.floorId;cu=null;L.push('',((Store.data.floors.get(cf)||{}).name||'').toUpperCase())}
+    if(d.unitId!==cu){cu=d.unitId;const u=Store.data.units.get(cu)||{};L.push((u.name||'')+(u.klatka?` (kl. ${u.klatka})`:'')+':')}
+    L.push(`${d.done?'☑':'☐'} ${++lp}. ${d.room?d.room+' – ':''}${d.title}${d.note?' ('+d.note+')':''}${S.report.cat==='all'?' ['+(CAT[d.cat]||CAT.inne).name+']':''}`);
+  }
+  return L.join('\n');
+}
+function reportCsv(rows){
+  const q=v=>{const s=String(v??'');return /[";\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const H=['Lp.','Kondygnacja','Klatka','Lokal','Pomieszczenie','Rodzaj','Usterka','Uwagi','Status','Data wpisu','Data poprawy','Zdjęcia'];
+  const R=rows.map((d,i)=>{const u=Store.data.units.get(d.unitId)||{};return [i+1,(Store.data.floors.get(d.floorId)||{}).name||'',u.klatka||'',u.name||'',d.room||'',(CAT[d.cat]||CAT.inne).name,d.title,d.note||'',d.done?'poprawione':'do poprawy',fmtDate(d.createdAt),d.done?fmtDate(d.doneAt):'',(d.photos||[]).length]});
+  return '﻿'+[H,...R].map(r=>r.map(q).join(';')).join('\r\n');
+}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Nie wczytano '+src));(document.head||document.body).appendChild(s)})}
+let pdfLoading=null;
+function ensurePdf(){if(window.pdfMake&&window.pdfMake.vfs)return Promise.resolve();return pdfLoading||(pdfLoading=loadScript('vendor/pdfmake.min.js').then(()=>loadScript('vendor/vfs_fonts.js')).catch(e=>{pdfLoading=null;throw e}))}
+async function makePdf(p,rows,summary,withPhotos){
+  await ensurePdf();
+  const fd=filterDesc(),gray='#5B6670',hair='#C9D0D6',green='#1D7A42',red='#B83A15';
+  const imgs=new Map();
+  if(withPhotos){const refs=[...new Set(rows.flatMap(d=>(d.photos||[]).slice(0,3)))];await pool(refs.map(r=>async()=>{const u=await photoDataUrl(r,720);if(u)imgs.set(r,u)}),3)}
+  const box=done=>({canvas:[{type:'rect',x:0,y:0,w:9,h:9,r:1,lineWidth:.8,lineColor:'#333333'}].concat(done?[{type:'polyline',points:[{x:1.8,y:4.6},{x:3.9,y:7},{x:7.6,y:1.9}],lineWidth:1.4,lineColor:green}]:[]),margin:[0,1.5,0,0]});
+  const content=[{text:'PROTOKÓŁ USTEREK',style:'h1'},{text:p.name,style:'h2'}];
+  if(p.address)content.push({text:p.address,color:gray,margin:[0,0,0,6]});
+  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor],['Liczba pozycji',String(rows.length)]);
+  content.push({table:{widths:[95,'*'],body:meta.map(r=>[{text:r[0],color:gray},{text:r[1],bold:true}])},layout:'noBorders',margin:[0,6,0,10]});
+  const sc=CATS.map(k=>{const a=summary.filter(d=>d.cat===k.id);return [k.name,a.filter(d=>!d.done).length,a.filter(d=>d.done).length,a.length]}).filter(r=>r[3]);
+  if(sc.length){
+    const tot=sc.reduce((t,r)=>[t[0],t[1]+r[1],t[2]+r[2],t[3]+r[3]],['Razem',0,0,0]);
+    content.push({table:{headerRows:1,widths:['*',70,70,50],body:[[{text:'Rodzaj',style:'th'},{text:'Do poprawy',style:'th',alignment:'right'},{text:'Poprawione',style:'th',alignment:'right'},{text:'Razem',style:'th',alignment:'right'}],...sc.map(r=>[r[0],{text:String(r[1]),alignment:'right',color:r[1]?red:gray},{text:String(r[2]),alignment:'right',color:r[2]?green:gray},{text:String(r[3]),alignment:'right'}]),[{text:tot[0],bold:true},{text:String(tot[1]),bold:true,alignment:'right'},{text:String(tot[2]),bold:true,alignment:'right'},{text:String(tot[3]),bold:true,alignment:'right'}]]},
+      layout:{hLineWidth:(i,n)=>i===0||i===1||i===n.table.body.length-1||i===n.table.body.length?.8:.3,vLineWidth:()=>0,hLineColor:()=>hair,paddingTop:()=>3,paddingBottom:()=>3},margin:[0,0,0,14]});
+  }
+  const tl={hLineWidth:(i,n)=>i===0||i===n.table.body.length?.8:.35,vLineWidth:()=>0,hLineColor:()=>hair,paddingLeft:()=>3,paddingRight:()=>3,paddingTop:()=>4,paddingBottom:()=>4};
+  let lp=0,cf=null,cu=null,body=null;
+  const flush=()=>{if(body&&body.length>1)content.push({table:{headerRows:1,dontBreakRows:true,widths:[10,18,70,62,'*'],body},layout:tl,margin:[0,0,0,8]});body=null};
+  for(const d of rows){
+    if(d.floorId!==cf){flush();cf=d.floorId;cu=null;content.push({text:((Store.data.floors.get(cf)||{}).name||'').toUpperCase(),style:'floor',headlineLevel:1})}
+    if(d.unitId!==cu){flush();cu=d.unitId;{const u=Store.data.units.get(cu)||{};content.push({text:[u.name||'',u.klatka?{text:'   klatka '+u.klatka,fontSize:9,bold:false,color:gray}:''],style:'unit',headlineLevel:1})}body=[['','Lp.','Pomieszczenie','Rodzaj','Usterka / uwagi'].map(t=>({text:t,style:'th'}))]}
+    lp++;
+    const desc=[{text:d.title,bold:true,color:d.done?gray:'#111111'}];
+    if(d.note)desc.push({text:d.note,color:'#333333',margin:[0,1,0,0]});
+    desc.push({text:d.done?'Poprawione '+fmtDate(d.doneAt):'Wpisano '+fmtDate(d.createdAt),fontSize:7.5,color:d.done?green:gray,margin:[0,1,0,0]});
+    const ph=(d.photos||[]).slice(0,3).map(r=>imgs.get(r)).filter(Boolean);
+    if(ph.length)desc.push({columns:ph.map(src=>({image:src,fit:[100,75],width:104})),columnGap:4,margin:[0,4,0,0]});
+    if(withPhotos&&(d.photos||[]).length>3)desc.push({text:`+ ${(d.photos.length-3)} kolejne zdjęcia w aplikacji`,fontSize:7.5,color:gray});
+    body.push([box(d.done),{text:lp+'.',color:gray},d.room||'—',(CAT[d.cat]||CAT.inne).name,{stack:desc}]);
+  }
+  flush();
+  const sig=t=>({stack:[{canvas:[{type:'line',x1:0,y1:0,x2:150,y2:0,lineWidth:.6,lineColor:'#333333',dash:{length:1.5,space:1.5}}]},{text:t,fontSize:8,margin:[0,3,0,0]},{text:'data i podpis',fontSize:7,color:gray}]});
+  content.push({unbreakable:true,margin:[0,24,0,0],stack:[{text:'Uwagi:',color:gray},{canvas:[0,1,2].map(i=>({type:'line',x1:0,y1:20+i*20,x2:523,y2:20+i*20,lineWidth:.4,lineColor:hair}))},{columns:[sig('Kierownik budowy'),sig('Przedstawiciel wykonawcy'),sig('Inspektor nadzoru / inwestor')],columnGap:20,margin:[0,40,0,0]}]});
+  const dd={pageSize:'A4',pageMargins:[36,40,36,44],info:{title:'Protokół usterek – '+p.name},content,
+    defaultStyle:{font:'Roboto',fontSize:9.5,lineHeight:1.15},
+    styles:{h1:{fontSize:17,bold:true,characterSpacing:1},h2:{fontSize:12.5,bold:true,margin:[0,2,0,1]},th:{fontSize:7.5,color:gray,bold:true},floor:{fontSize:10.5,bold:true,characterSpacing:1,margin:[0,10,0,2]},unit:{fontSize:11.5,bold:true,margin:[0,4,0,3]}},
+    pageBreakBefore:(cur,next)=>cur.headlineLevel===1&&next.length===0,
+    header:cur=>cur>1?{text:'Protokół usterek · '+p.name,fontSize:7.5,color:gray,margin:[36,18,36,0]}:null,
+    footer:(cur,cnt)=>({columns:[{text:`${fdLine(fd)} · ${fmtDate(Date.now())}`,fontSize:7.5,color:gray},{text:`Strona ${cur} z ${cnt}`,alignment:'right',fontSize:7.5,color:gray}],margin:[36,14,36,0]})};
+  return await new Promise((res,rej)=>{try{pdfMake.createPdf(dd).getBlob(b=>res(b))}catch(e){rej(e)}});
+}
+async function exportBackup(){
+  toast('Przygotowuję kopię…');
+  const D=Store.data,photos={};
+  await pool([...D.defects.values()].flatMap(d=>(d.photos||[]).map(r=>async()=>{try{const b=await B.photoBlob(r);if(b)photos[r]=await blobToDataUrl(b)}catch(e){}})),3);
+  const json={app:'protokol-usterek',version:1,exportedAt:new Date().toISOString(),projects:[...D.projects.values()],floors:[...D.floors.values()],units:[...D.units.values()],defects:[...D.defects.values()],photos};
+  offerFile(`protokol-usterek-kopia-${ymd()}.json`,new Blob([JSON.stringify(json)],{type:'application/json'}));
+}
+async function importBackup(file){
+  try{
+    const j=JSON.parse(await file.text());if(!j||j.app!=='protokol-usterek')throw new Error('format');
+    toast('Wczytuję kopię…');const map={};
+    for(const [ref,u] of Object.entries(j.photos||{})){try{map[ref]=await B.addPhoto(await dataUrlToBlob(u))}catch(e){}}
+    const items=[];for(const k of KINDS)for(const o of (j[k]||[]))if(o&&o.id)items.push([k,k==='defects'?Object.assign({},o,{photos:(o.photos||[]).map(r=>map[r]).filter(Boolean)}):o]);
+    await persistMany(items);toast(`Wczytano: ${(j.projects||[]).length} ${plural((j.projects||[]).length,'budowa','budowy','budów')}, ${(j.defects||[]).length} usterek`);
+  }catch(e){console.warn(e);toast('To nie jest plik kopii tej aplikacji.')}
+}
+
+/* ---------- demo ---------- */
+function buildDemo(){
+  const day=864e5,base=Date.UTC(2026,10,3,8,0),pid=uid(),items=[];
+  items.push(['projects',{id:pid,name:'Przykład: Osiedle Pod Lipami, bud. B',address:'ul. Przykładowa 12 · odbiory przed przekazaniem lokali',createdAt:base,demo:true}]);
+  const plan=[[-1,'Poziom −1',[['Garaż','common'],['Komórki','common']]],[0,'Parter',['M1','M2','M3','M4',['Klatka schodowa','common']]]];
+  for(let l=1;l<=3;l++)plan.push([l,'Piętro '+l,[1,2,3,4].map(i=>'M'+(l*4+i)).concat([['Klatka schodowa','common']])]);
+  const U={};
+  for(const [lvl,name,units] of plan){const fid=uid();items.push(['floors',{id:fid,projectId:pid,name,level:lvl,createdAt:base}]);units.forEach((x,i)=>{const [nm,kind]=Array.isArray(x)?x:[x,'flat'];const id=uid();U[lvl+'|'+nm]={id,fid};items.push(['units',{id,projectId:pid,floorId:fid,name:nm,kind,order:i,createdAt:base}])})}
+  const D=[
+    [-1,'Garaż','posadzki','Rysa na wylewce','Garaż','miejsce postojowe nr 7',0],[-1,'Garaż','elektryka','Oprawa oświetleniowa nie działa','Garaż','rząd przy wjeździe',1],[-1,'Komórki','inne','Brak numeracji / oznakowania','Komórka','komórki 1–16',0],
+    [0,'M1','okna','Okno źle wyregulowane – ociera','Salon','',1],[0,'M1','tynki','Rysa na tynku','Przedpokój','nad drzwiami wejściowymi',0],[0,'M1','elektryka','Brak pokrywy puszki','Kuchnia','',0],
+    [0,'M2','plytki','Głucha płytka','Łazienka','przy brodziku, 2 szt.',0],[0,'M2','hydraulika','Brak rozety','Łazienka','podejście pod umywalkę',1],[0,'M2','posadzki','Brak listwy przypodłogowej','Pokój','',0],
+    [0,'M3','drzwi','Drzwi ocierają o ościeżnicę','Łazienka','',0],[0,'M3','malowanie','Zacieki','Kuchnia','',1],
+    [0,'Klatka schodowa','malowanie','Zabrudzenia na ścianie','Klatka schodowa','przy skrzynkach pocztowych',0],[0,'Klatka schodowa','elektryka','Domofon nie działa','Klatka schodowa','panel przy wejściu',1],
+    [1,'M5','okna','Rysa na szybie','Pokój','skrzydło lewe',0],[1,'M5','ogrzewanie','Brak głowicy termostatycznej','Pokój','',1],[1,'M5','tynki','Uszkodzony narożnik','Przedpokój','',1],[1,'M5','balkon','Uszkodzona okładzina','Balkon','',0],
+    [1,'M6','elektryka','Gniazdo nie działa','Salon','przy oknie, obwód nr 4',0],[1,'M6','hydraulika','Przeciek na połączeniu','Kuchnia','pod zlewem',0],[1,'M6','wentylacja','Brak kratki wentylacyjnej','WC','',1],
+    [1,'M7','posadzki','Rysa na wylewce','Pokój 2','',1],[1,'M7','plytki','Brak silikonu w narożu','Łazienka','',1],
+    [1,'M8','okna','Brak obróbki / silikonu','Kuchnia','',0],[1,'M8','drzwi','Brak listwy progowej','Łazienka','',0],[1,'M8','malowanie','Prześwity – do poprawki','Salon','ściana przy oknie',0],
+    [2,'M9','tynki','Nierówności – do szpachlowania','Salon','',0],[2,'M9','elektryka','Krzywo zamontowany osprzęt','Przedpokój','',1],
+    [2,'M10','ogrzewanie','Grzejnik nie grzeje','Łazienka','',0],[2,'M10','okna','Uszkodzony parapet','Pokój','',1],
+    [2,'M12','plytki','Pęknięta płytka','Kuchnia','nad blatem',0],[2,'M12','balkon','Brak spadku – zastoiny','Balkon','',0],
+    [3,'M13','okna','Nieszczelność – przewiew','Salon','drzwi balkonowe',0],[3,'M13','tynki','Rysa na tynku','Pokój','sufit',1],
+    [3,'M14','hydraulika','Brak syfonu / zaślepki','Łazienka','',0],[3,'M14','elektryka','Domofon nie działa','Przedpokój','',0],
+    [3,'M15','posadzki','Nierówność posadzki','Salon','odchyłka 4 mm na łacie 2 m',0],
+    [3,'M16','drzwi','Zamek nie działa','Przedpokój','drzwi wejściowe',0],[3,'M16','malowanie','Nierówna linia styku kolorów','Pokój','',1],
+  ];
+  D.forEach(([lvl,un,cat,title,room,note,done],i)=>{const u=U[lvl+'|'+un];const created=base+Math.floor(i/6)*day+(i%6)*1800e3;items.push(['defects',{id:uid(),projectId:pid,floorId:u.fid,unitId:u.id,cat,title,room,note,photos:[],done:!!done,createdAt:created,doneAt:done?created+(3+i%5)*day:null,updatedAt:created}])});
+  return items;
+}
+window.__protokolDemo=()=>buildDemo().map(([k,o])=>({kind:k,doc:o}));
+async function loadDemo(){await persistMany(buildDemo())}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-act]');if(!t||t.closest('#sheet-root'))return;
+  const a=t.dataset.act,id=t.dataset.id;
+  switch(a){
+    case 'back':back();break;
+    case 'settings':go('settings');break;
+    case 'open-project':go('project',{projectId:id});break;
+    case 'new-project':openProjectForm(null);break;
+    case 'edit-project':openProjectForm(id);break;
+    case 'load-demo':await loadDemo();toast('Wczytano przykładową budowę');if(S.view!=='home'){stack.length=0;S.view='home';render()}break;
+    case 'generator':openGenerator(S.projectId);break;
+    case 'add-floor':openFloorForm(S.projectId,null);break;
+    case 'edit-floor':openFloorForm(S.projectId,id);break;
+    case 'add-unit':openUnitForm(null,t.dataset.floor);break;
+    case 'edit-unit':openUnitForm(id);break;
+    case 'open-group':openGroupSheet(t.dataset.floor,t.dataset.kind,t.dataset.k||'');break;
+    case 'open-unit':{const u=Store.data.units.get(id);if(u){S.unitFilter='all';go('unit',{unitId:id,projectId:u.projectId})}break}
+    case 'goto-unit':if(id){S.unitId=id;S.unitFilter='all';render();window.scrollTo(0,0)}break;
+    case 'ufilter':S.unitFilter=t.dataset.f;render();break;
+    case 'add-defect':openDefectForm(S.unitId,null);break;
+    case 'edit-defect':{const d=Store.data.defects.get(id);if(d)openDefectForm(d.unitId,id);break}
+    case 'toggle':{const d=Store.data.defects.get(id);if(!d)break;const done=!d.done;persist('defects',Object.assign({},d,{done,doneAt:done?Date.now():null,updatedAt:Date.now()}));toast(done?'Poprawione ✓':'Wróciło do poprawy');break}
+    case 'photo':{const d=Store.data.defects.get(id);if(d)openLightbox(d.photos||[],+t.dataset.i);break}
+    case 'report':S.report.klatka=selKlatka(S.projectId);go('report');break;
+    case 'kl':S.kl.set(S.projectId,t.dataset.k);render();break;
+    case 'report-cat':S.report.cat=t.dataset.cat;S.report.status='open';S.report.floor='all';S.report.klatka=selKlatka(S.projectId);go('report');break;
+    case 'rcat':S.report.cat=t.dataset.cat;render();break;
+    case 'rcat-toggle':S.report.cat=S.report.cat===t.dataset.cat?'all':t.dataset.cat;render();break;
+    case 'rstatus':S.report.status=t.dataset.s;render();break;
+    case 'rphotos':S.report.photos=t.checked;Prefs.set('pdfPhotos',t.checked);break;
+    case 'exp-txt':{const p=Store.data.projects.get(S.projectId);const txt=reportText(p,reportData(p).rows);try{await navigator.clipboard.writeText(txt);toast('Skopiowano. Wklej w SMS, WhatsApp albo e-mail.')}catch(err){openSheet(`${sheetHead('Tekst zestawienia')}<div class="sh-b gut"><p class="hint">Zaznacz i skopiuj tekst:</p><textarea class="inp txtout" readonly id="txt-out"></textarea></div>`,{full:true,onMount:el=>{const ta=el.querySelector('#txt-out');ta.value=txt;setTimeout(()=>{ta.focus();ta.select()},300)}})}break}
+    case 'exp-csv':{const p=Store.data.projects.get(S.projectId);const {rows}=reportData(p);offerFile(`Usterki_${slug(p.name)}_${S.report.cat==='all'?'wszystkie':S.report.cat}_${ymd()}.csv`,new Blob([reportCsv(rows)],{type:'text/csv'}));break}
+    case 'exp-pdf':{const p=Store.data.projects.get(S.projectId);const {rows,summary}=reportData(p);t.disabled=true;const old=t.innerHTML;t.innerHTML='<span class="spin" style="width:20px;height:20px;border-width:2.5px"></span>Tworzę PDF…';
+      try{const b=await makePdf(p,rows,summary,S.report.photos);await offerFile(`Usterki_${slug(p.name)}_${S.report.cat==='all'?'wszystkie':S.report.cat}_${ymd()}.pdf`,b)}catch(err){console.warn(err);toast('Nie udało się utworzyć PDF.')}finally{if(t.isConnected){t.disabled=false;t.innerHTML=old}}break}
+    case 'backup':exportBackup();break;
+    case 'restore':$('#restore-file').click();break;
+  }
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='r-floor'){S.report.floor=t.value;render()}
+  else if(t.id==='r-kl'){S.report.klatka=t.value;render()}
+  else if(t.id==='restore-file'&&t.files&&t.files[0]){importBackup(t.files[0]);t.value=''}
+});
+
+/* ---------- boot ---------- */
+async function boot(){
+  if(Env.artifact){
+    let db=null,assets=null,dl=null;
+    try{[db,assets,dl]=await Promise.all([window.claude.use('db'),window.claude.use('assets').catch(()=>null),window.claude.use('downloads').catch(()=>null)])}catch(e){}
+    Env.downloads=dl;
+    if(db){B=CloudBackend;Store.mode='cloud';CloudBackend.init(db,assets);render();return}
+  }
+  try{
+    if(!window.indexedDB)throw new Error('no idb');
+    B=LocalBackend;const r=await LocalBackend.init();Store.mode='local';
+    if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+  }catch(e){
+    console.warn('local storage unavailable',e);B=MemoryBackend;Store.mode='memory';for(const k of KINDS)Store.data[k]=new Map();
+  }
+  Store.ready=true;bump();render();openFromHash();
+  if(!Env.artifact&&'serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+boot();
+})();
+</script>
+</body>
+</html>
