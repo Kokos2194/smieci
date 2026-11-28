@@ -229,6 +229,12 @@ textarea.inp{min-height:76px;resize:vertical;line-height:1.4}
 .rg-u button{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left}
 .rg-u button:hover{color:var(--accent)}
 .rg-u span{font:500 13.5px var(--f-body);color:var(--ink-2)}
+details.more{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding-inline:12px}
+details.more>summary{display:flex;align-items:center;min-height:46px;font-weight:600;cursor:pointer;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";margin-left:auto;font:600 22px var(--f-display);color:var(--ink-2)}
+details.more[open]>summary::after{content:"–"}
+.more-b{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
 .checkline{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px}
 .checkline input{width:22px;height:22px;accent-color:var(--accent)}
 
@@ -291,6 +297,14 @@ textarea.inp{min-height:76px;resize:vertical;line-height:1.4}
 .lb .lb-c{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;color:#fff;font:600 15px var(--f-display)}
 #toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70;max-width:calc(100% - 32px);padding:12px 16px;border-radius:12px;background:var(--ink);color:var(--bg);font-weight:500;box-shadow:var(--shadow);opacity:0;transform:translate(-50%,16px);pointer-events:none;transition:opacity .2s,transform .2s}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+.ulist{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.urow{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:var(--surface);text-align:left}
+.urow:last-child{border-bottom:0}
+.urow b{font-weight:600}.urow span{font-size:13.5px;color:var(--ink-2)}
+.login{max-width:420px;width:100%;margin:8px auto 0}
+.login-h{margin:0;font:600 26px/1.2 var(--f-display)}
+.alog{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.alog time{font-size:12.5px;color:var(--ink-2)}
 .loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:80px 16px;color:var(--ink-2);text-align:center}
 @media (prefers-reduced-motion:reduce){.sheet,.sheet-back,#toast{transition:none}.spin{animation-duration:2.4s}}
 </style>
@@ -373,7 +387,7 @@ const Prefs={get(k,d){try{const v=localStorage.getItem('pu.'+k);return v==null?d
 
 /* ---------- store ---------- */
 const KINDS=['projects','floors','units','defects'];
-const Store={mode:'loading',ready:false,note:'',readOnly:false,data:{projects:new Map(),floors:new Map(),units:new Map(),defects:new Map()},urls:new Map()};
+const Store={mode:'loading',ready:false,note:'',readOnly:false,user:null,setup:false,users:null,data:{projects:new Map(),floors:new Map(),units:new Map(),defects:new Map()},urls:new Map()};
 let B=null;
 
 function idbReq(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -424,6 +438,97 @@ const CloudBackend={
   async delPhoto(ref){if(this.assets&&ref.startsWith('a:'))try{await this.assets.delete(ref.slice(2))}catch(e){}},
 };
 
+/* NAS server (api.php on Synology): one shared database for the team.
+   Every change is saved in the phone first and queued; the queue is sent when the NAS is reachable,
+   then changes made by others are pulled. Works without signal in basements and garages. */
+async function api(a,{method='GET',body=null,form=null,query=''}={}){
+  const opt={method,credentials:'same-origin',cache:'no-store',headers:{'X-Requested-With':'pu'}};
+  if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body)}
+  if(form)opt.body=form;
+  const r=await fetch('api.php?a='+a+query,opt);
+  let j=null;try{j=await r.json()}catch(e){}
+  if(r.status===401&&a!=='login'&&a!=='setup')authLost();
+  if(!r.ok||!j||j.ok===false){const e=new Error((j&&j.error)||('Błąd serwera ('+r.status+')'));e.status=r.status;throw e}
+  return j;
+}
+function authLost(){if(!Store.user)return;Store.user=null;Prefs.set('srvUser',null);closeSheet();render()}
+async function probeServer(){
+  try{const r=await fetch('api.php?a=me',{credentials:'same-origin',cache:'no-store',headers:{'X-Requested-With':'pu'}});
+    if(!(r.headers.get('content-type')||'').includes('json'))return null;const j=await r.json();return j&&j.app==='protokol-usterek'?j:null}
+  catch(e){return 'offline'}
+}
+function outboxAll(){return new Promise((res,rej)=>{const out=[];const rq=ServerBackend.db.transaction('outbox').objectStore('outbox').openCursor();rq.onsuccess=()=>{const c=rq.result;if(c){out.push([c.key,c.value]);c.continue()}else res(out)};rq.onerror=()=>rej(rq.error)})}
+const ServerBackend={
+  name:'server',
+  async init(){
+    const open=indexedDB.open('protokol-usterek-nas',1);
+    open.onupgradeneeded=()=>{const d=open.result;[...KINDS,'photos','meta'].forEach(n=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:'id'})});if(!d.objectStoreNames.contains('outbox'))d.createObjectStore('outbox',{autoIncrement:true})};
+    this.db=await idbReq(open);
+    for(const k of KINDS){const rows=await idbReq(this.db.transaction(k).objectStore(k).getAll());Store.data[k]=new Map(rows.map(r=>[r.id,r]))}
+    const c=await this.tx('meta','readonly',x=>x.get('cursor'));Sync.cursor=c?c.v:0;
+    await Sync.countPending();
+  },
+  tx(store,mode,fn){return idbReq(fn(this.db.transaction(store,mode).objectStore(store)))},
+  async queue(op){await this.tx('outbox','readwrite',x=>x.add(op));if(op.kind)Sync.pendingKeys.add(op.kind+'/'+op.id);Sync.pending++;syncPill();Sync.soon()},
+  async put(k,o){await this.tx(k,'readwrite',x=>x.put(o));await this.queue({op:'put',kind:k,id:o.id})},
+  async del(k,id){await this.tx(k,'readwrite',x=>x.delete(id));await this.queue({op:'del',kind:k,id})},
+  async addPhoto(blob){const id=uid()+Math.random().toString(36).slice(2,8);await this.tx('photos','readwrite',x=>x.put({id,blob}));await this.queue({op:'photo',pid:id});return 's:'+id},
+  async photoBlob(ref){const id=ref.slice(2);const r=await this.tx('photos','readonly',x=>x.get(id));if(r)return r.blob;try{const x=await fetch('api.php?a=photo&id='+encodeURIComponent(id),{credentials:'same-origin'});return x.ok?await x.blob():null}catch(e){return null}},
+  async delPhoto(ref){const id=ref.slice(2);await this.tx('photos','readwrite',x=>x.delete(id));await this.queue({op:'pdel',pid:id})},
+};
+const Sync={cursor:0,pending:0,pendingKeys:new Set(),busy:false,again:false,last:0,err:'',t:0,
+  soon(d=1200){clearTimeout(this.t);this.t=setTimeout(()=>this.run(),d)},
+  async countPending(){const all=await outboxAll();this.pending=all.length;this.pendingKeys=new Set(all.map(([,o])=>o).filter(o=>o.kind).map(o=>o.kind+'/'+o.id))},
+  async run(){
+    if(Store.mode!=='server'||!Store.user)return;
+    if(this.busy){this.again=true;return}
+    this.busy=true;let changed=false;
+    try{await this.push();await this.countPending();changed=await this.pull();this.err='';this.last=Date.now()}
+    catch(e){console.warn('sync',e);this.err=e.status===401?'':(e.status?(e.message||'błąd'):'offline')}
+    finally{this.busy=false;try{await this.countPending()}catch(e){}syncPill();if(changed){bump();scheduleRender()}if(this.again){this.again=false;this.soon(300)}}
+  },
+  async push(){
+    const SB=ServerBackend,entries=await outboxAll();if(!entries.length)return;
+    const done=[];
+    // photos first, so other phones can show them as soon as the defect arrives
+    for(const [key,o] of entries){
+      if(o.op==='photo'){const r=await SB.tx('photos','readonly',x=>x.get(o.pid));if(r){const fd=new FormData();fd.append('id',o.pid);fd.append('file',r.blob,'zdjecie.jpg');await api('photo',{method:'POST',form:fd});await SB.tx('photos','readwrite',x=>x.delete(o.pid))}done.push(key)}
+      else if(o.op==='pdel'){try{await api('photo_del',{method:'POST',body:{id:o.pid}})}catch(e){if(!e.status||e.status===401)throw e}done.push(key)}
+    }
+    const last=new Map();for(const [,o] of entries)if(o.op==='put'||o.op==='del')last.set(o.kind+'/'+o.id,o);
+    const ops=[];for(const o of last.values()){if(o.op==='del')ops.push({kind:o.kind,id:o.id,deleted:true});else{const d=Store.data[o.kind].get(o.id);if(d)ops.push({kind:o.kind,id:o.id,data:d})}}
+    for(let i=0;i<ops.length;i+=200)await api('push',{method:'POST',body:{ops:ops.slice(i,i+200)}});
+    for(const [key,o] of entries)if(o.op==='put'||o.op==='del')done.push(key);
+    if(done.length)await new Promise((res,rej)=>{const tx=SB.db.transaction('outbox','readwrite'),st=tx.objectStore('outbox');done.forEach(k=>st.delete(k));tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+  },
+  async pull(){
+    let changed=false,more=true;
+    while(more){
+      const j=await api('pull',{query:'&since='+this.cursor});
+      if(j.docs.length){
+        const tx=ServerBackend.db.transaction(KINDS,'readwrite');
+        for(const d of j.docs){
+          if(!KINDS.includes(d.kind)||this.pendingKeys.has(d.kind+'/'+d.id))continue;
+          if(d.deleted){if(Store.data[d.kind].has(d.id)){Store.data[d.kind].delete(d.id);changed=true}tx.objectStore(d.kind).delete(d.id)}
+          else{const o=Object.assign({},d.data,{id:d.id}),cur=Store.data[d.kind].get(d.id);if(!cur||JSON.stringify(cur)!==JSON.stringify(o)){Store.data[d.kind].set(d.id,o);changed=true}tx.objectStore(d.kind).put(o)}
+        }
+        await new Promise((res,rej)=>{tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});
+      }
+      this.cursor=j.seq;await ServerBackend.tx('meta','readwrite',x=>x.put({id:'cursor',v:j.seq}));more=j.more;
+    }
+    return changed;
+  },
+};
+setInterval(()=>{if(document.visibilityState==='visible')Sync.run()},15000);
+window.addEventListener('online',()=>Sync.run());
+window.addEventListener('offline',()=>syncPill());
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')Sync.run()});
+const hhmm=t=>new Date(t).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+function syncPill(){const el=$('#sync-pill');if(el)el.outerHTML=modeLine()}
+/* stamps who added and who fixed a defect (the NAS confirms them from the signed-in account) */
+function stamp(d,prev){if(!Store.user)return d;const n=Store.user.name;if(!prev)d.createdBy=n;else if(prev.createdBy)d.createdBy=prev.createdBy;d.doneBy=d.done?(prev&&prev.done&&prev.doneBy?prev.doneBy:n):null;d.updatedBy=n;return d}
+const isAdmin=()=>!!(Store.user&&Store.user.role==='admin');
+
 let IDX=null;
 function bump(){IDX=null}
 function idx(){
@@ -454,7 +559,23 @@ function klatkiOf(pid){const p=Store.data.projects.get(pid);const out=[...((p&&p
 function selKlatka(pid){const k=S.kl.get(pid)||'all';return k==='all'||klatkiOf(pid).includes(k)?k:'all'}
 function parseKlatki(v){return [...new Set(String(v||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean))].slice(0,12)}
 function unitSeq(pid){const kl=klatkiOf(pid),lv=new Map(floorsOf(pid).map((f,i)=>[f.id,i]));return unitsOfProject(pid).slice().sort((a,b)=>(kl.indexOf(a.klatka||'')-kl.indexOf(b.klatka||''))||(lv.get(a.floorId)-lv.get(b.floorId))||((a.order||0)-(b.order||0))||cmp(a.name,b.name))}
-const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor].filter(Boolean).join(' · ');
+const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor,fd.extra].filter(Boolean).join(' · ');
+const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ł/g,'l');
+const isoDay=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dayFmt=v=>v?v.split('-').reverse().join('.'):'';
+/* extra report filters: text search, who added / who fixed, date range of adding or fixing */
+function extraMatch(R){
+  const q=norm(R.q).trim(),U=Store.data.units;
+  const from=R.from?new Date(R.from+'T00:00:00').getTime():null,to=R.to?new Date(R.to+'T23:59:59.999').getTime():null;
+  return d=>{
+    if(q&&!norm([d.title,d.note,d.room,(CAT[d.cat]||CAT.inne).name,(U.get(d.unitId)||{}).name,d.createdBy,d.doneBy].join(' ')).includes(q))return false;
+    if(R.who&&d.createdBy!==R.who)return false;
+    if(R.fixer&&(!d.done||d.doneBy!==R.fixer))return false;
+    if(from!=null||to!=null){const t=R.dateField==='done'?(d.done?d.doneAt:null):d.createdAt;if(!t||(from!=null&&t<from)||(to!=null&&t>to))return false}
+    return true;
+  };
+}
+const extraActive=R=>!!(R.q.trim()||R.who||R.fixer||R.from||R.to);
 
 function writeErr(e){
   console.warn(e);const c=e&&e.code;
@@ -511,7 +632,7 @@ function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader(
 async function dataUrlToBlob(u){const r=await fetch(u);return r.blob()}
 
 /* ---------- navigation ---------- */
-const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',photos:Prefs.get('pdfPhotos',true)}};
+const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',q:'',who:'',fixer:'',dateField:'created',from:'',to:'',more:false,photos:Prefs.get('pdfPhotos',true)}};
 const stack=[];let ignorePop=false;
 function go(view,params={}){
   stack.push({view:S.view,projectId:S.projectId,unitId:S.unitId,y:window.scrollY});
@@ -536,6 +657,7 @@ let rq=0;function scheduleRender(){if(rq)return;rq=requestAnimationFrame(()=>{rq
 function render(){
   const app=$('#app');let html;
   if(!Store.ready)html=viewLoading();
+  else if(Store.mode==='server'&&!Store.user)html=viewLogin();
   else if(S.view==='project')html=viewProject();
   else if(S.view==='unit')html=viewUnit();
   else if(S.view==='report')html=viewReport();
@@ -544,6 +666,7 @@ function render(){
   const sc=$('.bld-scroll',app);if(sc)bldScroll.set(sc.dataset.pid,sc.scrollLeft);
   app.innerHTML=html;hydrate(app);
   const sc2=$('.bld-scroll',app);if(sc2){sc2.scrollLeft=bldScroll.get(sc2.dataset.pid)||0;bldHint()}
+  if(S.view==='settings'&&isAdmin()&&Store.mode==='server')loadUsers();
 }
 const bldScroll=new Map();
 function bldHint(){const sc=$('.bld-scroll'),h=$('#bld-hint');if(sc&&h)h.hidden=sc.scrollWidth<=sc.clientWidth+2}
@@ -552,10 +675,30 @@ function top({title,sub='',back:b=true,actions='',brand=false}){
   return `<header class="top gut"><div class="top-in">${b?`<button class="ib back" data-act="back" aria-label="Wstecz">${ic(UI.back)}</button>`:''}<div class="top-t ${brand?'brand':''}"><h1>${esc(title)}</h1>${sub?`<p>${sub}</p>`:''}</div>${actions}</div></header>`;
 }
 function modeLine(){
+  if(Store.mode==='server'){
+    const p=Sync.pending,wait=p?` · ${p} ${plural(p,'zmiana czeka','zmiany czekają','zmian czeka')}`:'';
+    if(Sync.err==='offline'||!navigator.onLine)return `<span class="pill off" id="sync-pill"><i></i>Bez połączenia z NAS${wait}</span>`;
+    if(Sync.err)return `<span class="pill off" id="sync-pill"><i></i>Błąd synchronizacji${wait}</span>`;
+    return `<span class="pill" id="sync-pill"><i></i>${esc(Store.user?Store.user.name:'')} · ${p?'wysyłam zmiany…':Sync.last?'zsynchronizowano '+hhmm(Sync.last):'łączę z NAS…'}</span>`;
+  }
   if(Store.mode==='cloud')return `<span class="pill"><i></i>Zapis w chmurze – ten sam stan na telefonie i komputerze</span>`;
   if(Store.mode==='local')return `<span class="pill"><i></i>Zapis na tym urządzeniu</span>`;
   if(Store.mode==='memory')return `<span class="pill off"><i></i>Podgląd – dane nie są zapisywane</span>`;
   return '';
+}
+function viewLogin(){
+  const setup=Store.setup;
+  return `${top({title:'Protokół usterek',back:false,brand:true,sub:'Serwer firmowy (NAS)'})}
+  <main class="main gut"><form class="sec login" id="login-form">
+    ${setup?`<h2 class="login-h">Pierwsze uruchomienie</h2><div class="note">${ic(UI.info)}<p>Utwórz konto administratora. Potem w Ustawieniach dodasz konta pozostałych osób.</p></div>
+    <div class="fld"><label for="lg-name">Imię i nazwisko</label><input class="inp" id="lg-name" autocomplete="name" required></div>`:`<h2 class="login-h">Zaloguj się</h2>`}
+    <div class="fld"><label for="lg-login">Login</label><input class="inp" id="lg-login" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>
+    <div class="fld"><label for="lg-pass">Hasło</label><input class="inp" id="lg-pass" type="password" autocomplete="${setup?'new-password':'current-password'}" required></div>
+    ${setup?`<div class="fld"><label for="lg-pass2">Powtórz hasło</label><input class="inp" id="lg-pass2" type="password" autocomplete="new-password" required></div><p class="hint">Hasło: co najmniej 8 znaków.</p>`:''}
+    <p class="err" id="lg-err" hidden></p>
+    <button class="btn pri" type="submit">${setup?'Utwórz konto administratora':'Zaloguj'}</button>
+    ${setup?'':'<p class="hint">Konto zakłada administrator w Ustawieniach → Użytkownicy.</p>'}
+  </form></main>`;
 }
 function viewLoading(){return `${top({title:'Protokół usterek',back:false,brand:true})}<main class="main gut"><div class="loading"><span class="spin"></span><div>${esc(Store.note||'Wczytywanie danych…')}</div></div></main>`}
 
@@ -575,7 +718,7 @@ function viewHome(){
     ${Store.note?`<div class="note warn">${ic(UI.info)}<p>${esc(Store.note)}</p></div>`:''}
     ${Store.mode==='memory'?`<div class="note warn">${ic(UI.info)}<p>Ta przeglądarka nie pozwala zapisywać danych. Możesz wypróbować aplikację, ale po zamknięciu wpisy znikną.</p></div>`:''}
     <section class="sec"><div class="sh"><h2>Budowy</h2><button class="btn sm pri" data-act="new-project">${ic(UI.plus)}Nowa budowa</button></div>
-    ${ps.length?`<div class="plist">${cards}</div>`:`<div class="empty">${ART_BUILDING}<h3>Nie ma jeszcze żadnej budowy</h3><p>Dodaj budowę, a generator od razu rozpisze kondygnacje i mieszkania. Możesz też obejrzeć gotowy przykład.</p><div class="row" style="justify-content:center"><button class="btn pri" data-act="new-project">${ic(UI.plus)}Nowa budowa</button><button class="btn" data-act="load-demo">Wczytaj przykład</button></div></div>`}
+    ${ps.length?`<div class="plist">${cards}</div>`:`<div class="empty">${ART_BUILDING}<h3>Nie ma jeszcze żadnej budowy</h3><p>Dodaj budowę, a generator od razu rozpisze kondygnacje i mieszkania.${Store.mode==='server'&&!isAdmin()?'':' Możesz też obejrzeć gotowy przykład.'}</p><div class="row" style="justify-content:center"><button class="btn pri" data-act="new-project">${ic(UI.plus)}Nowa budowa</button>${Store.mode==='server'&&!isAdmin()?'':'<button class="btn" data-act="load-demo">Wczytaj przykład</button>'}</div></div>`}
     </section>
   </main>`;
 }
@@ -673,7 +816,7 @@ function defectItem(d,compact){
   const k=CAT[d.cat]||CAT.inne;const ph=d.photos||[];
   return `<article class="d ${d.done?'done':''} ${compact?'compact':''}">
     <button class="ck" role="checkbox" aria-checked="${d.done?'true':'false'}" aria-label="Poprawione: ${esc(d.title)}" data-act="toggle" data-id="${d.id}"><i>${d.done?ic(UI.check):''}</i></button>
-    <button class="d-b" data-act="edit-defect" data-id="${d.id}"><span class="d-cat">${ic(k.ic)}${k.name}${d.room?' · '+esc(d.room):''}</span><span class="d-t">${esc(d.title)}</span>${d.note?`<span class="d-note">${esc(d.note)}</span>`:''}<span class="d-m ${d.done?'ok':''}">${d.done?'Poprawione '+fmtDate(d.doneAt):'Wpisano '+fmtDate(d.createdAt)}${ph.length?` · ${ph.length} ${plural(ph.length,'zdjęcie','zdjęcia','zdjęć')}`:''}</span></button>
+    <button class="d-b" data-act="edit-defect" data-id="${d.id}"><span class="d-cat">${ic(k.ic)}${k.name}${d.room?' · '+esc(d.room):''}</span><span class="d-t">${esc(d.title)}</span>${d.note?`<span class="d-note">${esc(d.note)}</span>`:''}<span class="d-m ${d.done?'ok':''}">${d.done?'Poprawione '+fmtDate(d.doneAt)+(d.doneBy?' · '+esc(d.doneBy):''):'Wpisano '+fmtDate(d.createdAt)+(d.createdBy?' · '+esc(d.createdBy):'')}${ph.length?` · ${ph.length} ${plural(ph.length,'zdjęcie','zdjęcia','zdjęć')}`:''}</span></button>
     ${ph.length?`<div class="thumbs">${ph.map((r,i)=>`<button class="th" data-act="photo" data-id="${d.id}" data-i="${i}" aria-label="Pokaż zdjęcie ${i+1}">${imgTag(r)}</button>`).join('')}</div>`:''}
   </article>`;
 }
@@ -704,7 +847,7 @@ function reportData(p){
   if(R.floor!=='all'&&!fl.some(f=>f.id===R.floor))R.floor='all';
   if(R.klatka!=='all'&&!kl.includes(R.klatka))R.klatka='all';
   const st=d=>R.status==='all'||(R.status==='open'?!d.done:d.done);
-  let ds=defectsOfProject(p.id);
+  let ds=defectsOfProject(p.id).filter(extraMatch(R));
   if(R.klatka!=='all')ds=ds.filter(d=>unitKl(d.unitId)===R.klatka);
   const byStatus=ds.filter(st);
   if(R.floor!=='all')ds=ds.filter(d=>d.floorId===R.floor);
@@ -716,7 +859,28 @@ function reportData(p){
   return {fl,kl,rows,byStatus,forChips,summary};
 }
 function filterDesc(){
-  const R=S.report;return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka)};
+  const R=S.report,ex=[];
+  if(R.q.trim())ex.push('szukane: „'+R.q.trim()+'”');
+  if(R.who)ex.push('wpisał(a): '+R.who);
+  if(R.fixer)ex.push('poprawił(a): '+R.fixer);
+  if(R.from||R.to)ex.push((R.dateField==='done'?'poprawione ':'wpisane ')+(R.from&&R.to?dayFmt(R.from)+' – '+dayFmt(R.to):R.from?'od '+dayFmt(R.from):'do '+dayFmt(R.to)));
+  return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka),extra:ex.join(', ')};
+}
+function reportExtraHtml(p){
+  const R=S.report,all=defectsOfProject(p.id);
+  const names=k=>[...new Set(all.map(d=>d[k]).filter(Boolean))].sort(cmp);
+  const ws=names('createdBy'),fs=names('doneBy');const today=isoDay(Date.now());
+  const ago=n=>isoDay(Date.now()-n*864e5);const rng=(n)=>R.to===today&&R.from===(n===0?today:ago(n));
+  const nAct=[R.who,R.fixer,R.from||R.to].filter(Boolean).length;
+  const opt=(list,cur,label)=>`<option value="">${label}: wszyscy</option>`+list.map(n=>`<option value="${esc(n)}" ${cur===n?'selected':''}>${label}: ${esc(n)}</option>`).join('');
+  return `<label class="vh" for="r-q">Szukaj</label><input type="search" class="inp" id="r-q" enterkeyhint="search" placeholder="Szukaj: np. parapet, M12, nazwisko" value="${esc(R.q)}">
+    <details class="more" id="r-more" ${R.more||nAct?'open':''}><summary>Osoba i data${nAct?` (${nAct})`:''}</summary><div class="more-b">
+      ${ws.length||fs.length?`<label class="vh" for="r-who">Wpisał(a)</label><select class="inp" id="r-who">${opt(ws,R.who,'Wpisał(a)')}</select><label class="vh" for="r-fixer">Poprawił(a)</label><select class="inp" id="r-fixer">${opt(fs,R.fixer,'Poprawił(a)')}</select>`:''}
+      <div class="seg" role="group" aria-label="Która data"><button data-act="rdate" data-f="created" aria-pressed="${R.dateField==='created'}">Data wpisu</button><button data-act="rdate" data-f="done" aria-pressed="${R.dateField==='done'}">Data poprawy</button></div>
+      <div class="chips sm"><button class="chip" data-act="rrange" data-d="0" aria-pressed="${rng(0)}">Dziś</button><button class="chip" data-act="rrange" data-d="7" aria-pressed="${rng(7)}">7 dni</button><button class="chip" data-act="rrange" data-d="30" aria-pressed="${rng(30)}">30 dni</button><button class="chip" data-act="rrange" data-d="all" aria-pressed="${!R.from&&!R.to}">Cały czas</button></div>
+      <div class="grid2"><div><label class="lbl" for="r-from">Od</label><input class="inp" type="date" id="r-from" value="${esc(R.from)}"></div><div><label class="lbl" for="r-to">Do</label><input class="inp" type="date" id="r-to" value="${esc(R.to)}"></div></div>
+    </div></details>
+    ${extraActive(R)?`<div class="row"><button class="btn sm" data-act="rclear">${ic(UI.x)}Wyczyść wyszukiwanie i filtry osoby/daty</button></div>`:''}`;
 }
 function viewReport(){
   const p=Store.data.projects.get(S.projectId);if(!p){S.view='home';return viewHome()}
@@ -749,6 +913,7 @@ function viewReport(){
       <div class="seg" role="group" aria-label="Status">${seg}</div>
       <div class="chips">${chips}</div>
       <div class="${kl.length?'grid2':''}">${kl.length?`<div><label class="vh" for="r-kl">Klatka</label><select class="inp" id="r-kl"><option value="all">Wszystkie klatki</option>${kl.map(k=>`<option value="${esc(k)}" ${R.klatka===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select></div>`:''}<div><label class="vh" for="r-floor">Kondygnacja</label><select class="inp" id="r-floor">${flOpts}</select></div></div>
+      ${reportExtraHtml(p)}
     </section>
     <section class="sec"><div class="sh"><h2>${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')} · ${esc(fd.cat)}${fd.klatka?' · '+esc(fd.klatka):''}</h2></div>
       ${rows.length?`<div class="dl">${list}</div>`:`<p class="hint">Brak usterek dla wybranego filtra.</p>`}
@@ -764,16 +929,21 @@ function viewReport(){
 
 function viewSettings(){
   const D=Store.data;const nPh=[...D.defects.values()].reduce((a,d)=>a+(d.photos||[]).length,0);
-  const where=Store.mode==='cloud'?'Dane są zapisane w chmurze, przy tej stronie na Twoim koncie claude.ai. Widzisz je na telefonie i na komputerze. Zdjęcia też są w chmurze.':Store.mode==='local'?'Dane są zapisane tylko w tej przeglądarce na tym urządzeniu. Raz na jakiś czas zrób kopię zapasową, zwłaszcza przed zmianą telefonu.':'Ta przeglądarka nie zapisuje danych – po zamknięciu znikną.';
+  const where=Store.mode==='server'?'Dane są na serwerze firmy (NAS). Zmiany trafiają do wszystkich zalogowanych w ciągu kilkunastu sekund. Bez zasięgu wpisujesz normalnie – zmiany czekają w telefonie i wyślą się same.':Store.mode==='cloud'?'Dane są zapisane w chmurze, przy tej stronie na Twoim koncie claude.ai. Widzisz je na telefonie i na komputerze. Zdjęcia też są w chmurze.':Store.mode==='local'?'Dane są zapisane tylko w tej przeglądarce na tym urządzeniu. Raz na jakiś czas zrób kopię zapasową, zwłaszcza przed zmianą telefonu.':'Ta przeglądarka nie zapisuje danych – po zamknięciu znikną.';
   const install=!Env.artifact&&!matchMedia('(display-mode: standalone)').matches;
   return `${top({title:'Ustawienia'})}
   <main class="main gut">
     <section class="sec"><div class="sh"><h2>Gdzie są dane</h2></div><div class="note">${ic(UI.info)}<p>${where}</p></div>
       <dl class="kv"><dt>Budowy</dt><dd>${D.projects.size}</dd><dt>Lokale</dt><dd>${D.units.size}</dd><dt>Usterki</dt><dd>${D.defects.size}</dd><dt>Zdjęcia</dt><dd>${nPh}</dd></dl></section>
-    <section class="sec"><div class="sh"><h2>Kopia zapasowa</h2></div>
+    ${Store.mode==='server'&&Store.user?`<section class="sec"><div class="sh"><h2>Konto</h2></div>
+      <p class="hint">Zalogowany(a): <b>${esc(Store.user.name)}</b> (${esc(Store.user.login)}, ${isAdmin()?'administrator':'kontroler'})</p>
+      <div class="row"><button class="btn" data-act="sync-now">Synchronizuj teraz</button><button class="btn" data-act="change-pass">Zmień hasło</button><button class="btn" data-act="logout">Wyloguj</button></div></section>
+    ${isAdmin()?`<section class="sec"><div class="sh"><h2>Użytkownicy</h2><button class="btn sm pri" data-act="new-user">${ic(UI.plus)}Dodaj</button></div><div class="ulist" id="users-box"><p class="hint" style="padding:12px 14px">Wczytywanie…</p></div>
+      <div class="row"><button class="btn" data-act="audit">Historia zmian</button></div></section>`:''}`:''}
+    <section class="sec"><div class="sh"><h2>Kopia zapasowa</h2></div>${Store.mode==='server'?'<p class="hint">Na NAS-ie codziennie powstaje kopia bazy, którą zabiera Hyper Backup. Plik poniżej to dodatkowa kopia do ręcznego przeniesienia.</p>':''}
       <p class="hint">Jeden plik .json ze wszystkimi budowami i zdjęciami. Wczytanie kopii dopisuje dane, nic nie kasuje.</p>
       <div class="row"><button class="btn" data-act="backup">${ic(UI.down)}Zapisz kopię</button><button class="btn" data-act="restore">${ic(UI.upload)}Wczytaj kopię</button><input type="file" id="restore-file" class="vh" accept="application/json,.json" tabindex="-1"></div></section>
-    <section class="sec"><div class="sh"><h2>Przykład</h2></div><p class="hint">Gotowa budowa z 16 mieszkaniami i kilkudziesięcioma usterkami do przećwiczenia.</p><div class="row"><button class="btn" data-act="load-demo">Wczytaj przykładową budowę</button></div></section>
+    ${Store.mode==='server'&&!isAdmin()?'':`<section class="sec"><div class="sh"><h2>Przykład</h2></div><p class="hint">Gotowa budowa z 16 mieszkaniami i kilkudziesięcioma usterkami do przećwiczenia.</p><div class="row"><button class="btn" data-act="load-demo">Wczytaj przykładową budowę</button></div></section>`}
     ${install?`<section class="sec"><div class="sh"><h2>Ikona na telefonie</h2></div><p class="hint">iPhone: Safari → Udostępnij → „Do ekranu początkowego”. Android: Chrome → menu ⋮ → „Zainstaluj aplikację”. Aplikacja działa wtedy jak zwykła apka, także bez internetu.</p></section>`:''}
   </main>`;
 }
@@ -810,6 +980,7 @@ function openDefectForm(unitId,defectId){
   const canPhoto=!(Store.mode==='cloud'&&!CloudBackend.assets);
   const html=`${sheetHead(orig?'Edycja usterki':'Nowa usterka',u.name)}
   <div class="sh-b gut">
+    ${orig&&(orig.createdBy||orig.doneBy)?`<p class="hint">${orig.createdBy?`Wpisał(a): <b>${esc(orig.createdBy)}</b>, ${fmtDate(orig.createdAt)}`:''}${orig.doneBy?`${orig.createdBy?' · ':''}Poprawione: <b>${esc(orig.doneBy)}</b>, ${fmtDate(orig.doneAt)}`:''}</p>`:''}
     <div class="fld"><span class="lbl">Rodzaj</span><div class="cats" id="f-cats"></div></div>
     <div class="fld"><label for="f-title">Usterka</label><input class="inp" id="f-title" autocomplete="off" enterkeyhint="done" placeholder="Wybierz z listy poniżej albo wpisz"><div class="chips sm" id="f-typ"></div></div>
     <div class="fld"><label for="f-room">Pomieszczenie</label><input class="inp" id="f-room" autocomplete="off" enterkeyhint="done" placeholder="np. Kuchnia"><div class="chips sm" id="f-rooms"></div></div>
@@ -853,7 +1024,7 @@ function openDefectForm(unitId,defectId){
       if(!title){err('Wybierz usterkę z listy albo wpisz własny opis.');return null}
       if(st.busy){err('Poczekaj chwilę, zdjęcia jeszcze się zapisują.');return null}
       const now=Date.now();
-      return {id:orig?orig.id:uid(),projectId:u.projectId,floorId:u.floorId,unitId:u.id,cat:st.cat,title,room:rI.value.trim(),note:nI.value.trim(),photos:[...st.photos],done:st.done,createdAt:orig?orig.createdAt:now,doneAt:st.done?(orig&&orig.done&&orig.doneAt?orig.doneAt:now):null,updatedAt:now};
+      return stamp({id:orig?orig.id:uid(),projectId:u.projectId,floorId:u.floorId,unitId:u.id,cat:st.cat,title,room:rI.value.trim(),note:nI.value.trim(),photos:[...st.photos],done:st.done,createdAt:orig?orig.createdAt:now,doneAt:st.done?(orig&&orig.done&&orig.doneAt?orig.doneAt:now):null,updatedAt:now},orig);
     };
     q('#f-save').addEventListener('click',()=>{const d=collect();if(!d)return;Prefs.set('lastCat',d.cat);persist('defects',d);st.removed.forEach(r=>B.delPhoto(r));st.saved=true;closeSheet();toast(orig?'Zapisano zmiany':'Dodano usterkę')});
     const nx=q('#f-next');if(nx)nx.addEventListener('click',()=>{const d=collect();if(!d)return;Prefs.set('lastCat',d.cat);persist('defects',d);st.added=[];st.photos=[];st.done=false;tI.value='';nI.value='';paintTyp();paintPh();paintDone();q('.sh-b').scrollTo({top:0,behavior:'smooth'});toast('Dodano. Wpisz następną usterkę.')});
@@ -1019,6 +1190,74 @@ function openUnitForm(uid_,floorId){
   }});
 }
 
+async function loadUsers(){
+  const box=$('#users-box');if(!box)return;
+  try{const j=await api('users');Store.users=j.users;if(!box.isConnected)return;
+    box.innerHTML=j.users.map(u=>`<button class="urow" data-act="edit-user" data-id="${u.id}"><b>${esc(u.name)}</b><span>${esc(u.login)} · ${u.role==='admin'?'administrator':'kontroler'}${u.active?'':' · konto wyłączone'}</span></button>`).join('')}
+  catch(e){if(box.isConnected)box.innerHTML=`<p class="hint" style="padding:12px 14px">${esc(e.status?e.message:'Lista użytkowników jest dostępna tylko z połączeniem z NAS.')}</p>`}
+}
+function genPass(){const a='abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(10);crypto.getRandomValues(r);return [...r].map(x=>a[x%a.length]).join('')}
+function openUserForm(id){
+  const u=id?(Store.users||[]).find(x=>String(x.id)===String(id)):null;let role=u?u.role:'user';
+  const html=`${sheetHead(u?'Użytkownik':'Nowy użytkownik')}
+  <div class="sh-b gut">
+    <div class="fld"><label for="us-name">Imię i nazwisko</label><input class="inp" id="us-name" value="${esc(u?u.name:'')}" autocomplete="off"></div>
+    <div class="fld"><label for="us-login">Login</label><input class="inp" id="us-login" value="${esc(u?u.login:'')}" autocapitalize="none" spellcheck="false" autocomplete="off"></div>
+    <div class="fld"><label for="us-pass">${u?'Nowe hasło (zostaw puste, żeby nie zmieniać)':'Hasło'}</label><div class="row"><input class="inp" id="us-pass" style="flex:1;min-width:0" autocomplete="off" spellcheck="false" value="${u?'':genPass()}"><button type="button" class="btn" id="us-gen">Losuj</button></div><p class="hint">Przekaż login i hasło tej osobie. Hasło może potem zmienić w Ustawieniach.</p></div>
+    <div class="seg" role="group" aria-label="Uprawnienia"><button type="button" data-r="user">Kontroler</button><button type="button" data-r="admin">Administrator</button></div>
+    ${u?`<label class="checkline"><input type="checkbox" id="us-active" ${u.active?'checked':''}>Konto aktywne</label>`:''}
+    <p class="err" id="us-err" hidden></p>
+  </div>
+  <div class="sh-f gut"><button class="btn pri grow" id="us-save">${ic(UI.check)}Zapisz</button></div>`;
+  openSheet(html,{onMount:el=>{
+    const q=x=>el.querySelector(x);const paint=()=>$$('.seg button',el).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.r===role)));paint();
+    $$('.seg button',el).forEach(b=>b.addEventListener('click',()=>{role=b.dataset.r;paint()}));
+    q('#us-gen').addEventListener('click',()=>{q('#us-pass').value=genPass()});
+    q('#us-save').addEventListener('click',async()=>{
+      const body={id:u?u.id:0,name:q('#us-name').value.trim(),login:q('#us-login').value.trim(),password:q('#us-pass').value.trim(),role,active:u?q('#us-active').checked:true};
+      try{await api('user_save',{method:'POST',body});closeSheet();toast(u?'Zapisano użytkownika':'Dodano: '+body.login);loadUsers()}
+      catch(e){const x=q('#us-err');x.textContent=e.status?e.message:'Brak połączenia z NAS.';x.hidden=false}
+    });
+  }});
+}
+function openPasswordForm(){
+  const html=`${sheetHead('Zmiana hasła')}<div class="sh-b gut">
+    <div class="fld"><label for="pw-old">Obecne hasło</label><input class="inp" id="pw-old" type="password" autocomplete="current-password"></div>
+    <div class="fld"><label for="pw-new">Nowe hasło (min. 8 znaków)</label><input class="inp" id="pw-new" type="password" autocomplete="new-password"></div>
+    <div class="fld"><label for="pw-new2">Powtórz nowe hasło</label><input class="inp" id="pw-new2" type="password" autocomplete="new-password"></div>
+    <p class="err" id="pw-err" hidden></p></div>
+  <div class="sh-f gut"><button class="btn pri grow" id="pw-save">${ic(UI.check)}Zmień hasło</button></div>`;
+  openSheet(html,{onMount:el=>{const q=x=>el.querySelector(x),err=m=>{const x=q('#pw-err');x.textContent=m;x.hidden=!m};
+    q('#pw-save').addEventListener('click',async()=>{if(q('#pw-new').value!==q('#pw-new2').value){err('Nowe hasła się różnią.');return}
+      try{await api('password',{method:'POST',body:{old:q('#pw-old').value,new:q('#pw-new').value}});closeSheet();toast('Hasło zmienione')}catch(e){err(e.status?e.message:'Brak połączenia z NAS.')}})}});
+}
+async function openAudit(){
+  try{
+    const j=await api('audit');
+    const A={create:'dodał(a)',edit:'zmienił(a)',done:'oznaczył(a) jako poprawione',reopen:'przywrócił(a) do poprawy',delete:'usunął(ęła)',login:'zalogował(a) się',setup:'utworzył(a) konto administratora',password:'zmienił(a) hasło'};
+    const K={defects:'usterkę',projects:'budowę',floors:'kondygnację',units:'lokal',users:'konto'};
+    const rows=j.entries.map(x=>`<div class="alog"><time>${new Date(x.at).toLocaleString('pl-PL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</time><span><b>${esc(x.user||'?')}</b> ${A[x.action]||esc(x.action)} ${x.action==='login'||x.action==='password'?'':(K[x.kind]||'')}${x.info&&x.action!=='login'&&x.action!=='password'?` „${esc(x.info)}”`:''}</span></div>`).join('');
+    openSheet(`${sheetHead('Historia zmian','ostatnie 300')}<div class="sh-b gut">${rows||'<p class="hint">Brak wpisów.</p>'}</div>`,{full:true});
+  }catch(e){toast(e.status?e.message:'Historia jest dostępna tylko z połączeniem z NAS.')}
+}
+async function logout(){
+  if(Sync.pending)await Sync.run();
+  if(Sync.pending){toast('Najpierw muszą się wysłać zmiany – brak połączenia z NAS.');return}
+  try{await api('logout',{method:'POST'})}catch(e){}
+  Store.user=null;Prefs.set('srvUser',null);stack.length=0;S.view='home';render();
+}
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='login-form')return;e.preventDefault();
+  const f=e.target,q=x=>f.querySelector(x),err=m=>{const x=q('#lg-err');x.textContent=m;x.hidden=!m};
+  const login=q('#lg-login').value.trim(),password=q('#lg-pass').value;
+  try{
+    let j;
+    if(Store.setup){if(password!==q('#lg-pass2').value){err('Hasła się różnią.');return}j=await api('setup',{method:'POST',body:{name:q('#lg-name').value.trim(),login,password}})}
+    else j=await api('login',{method:'POST',body:{login,password}});
+    Store.user=j.user;Store.setup=false;Prefs.set('srvUser',j.user);render();Sync.run();toast('Zalogowano: '+j.user.name);
+  }catch(x){err(x.status?x.message:'Nie mogę połączyć się z NAS-em. Sprawdź, czy jesteś w sieci firmowej albo masz włączony Tailscale.')}
+});
+
 /* ---------- lightbox & toast ---------- */
 let lbState=null;
 function openLightbox(refs,i){
@@ -1061,8 +1300,8 @@ function reportText(p,rows){
 }
 function reportCsv(rows){
   const q=v=>{const s=String(v??'');return /[";\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
-  const H=['Lp.','Kondygnacja','Klatka','Lokal','Pomieszczenie','Rodzaj','Usterka','Uwagi','Status','Data wpisu','Data poprawy','Zdjęcia'];
-  const R=rows.map((d,i)=>{const u=Store.data.units.get(d.unitId)||{};return [i+1,(Store.data.floors.get(d.floorId)||{}).name||'',u.klatka||'',u.name||'',d.room||'',(CAT[d.cat]||CAT.inne).name,d.title,d.note||'',d.done?'poprawione':'do poprawy',fmtDate(d.createdAt),d.done?fmtDate(d.doneAt):'',(d.photos||[]).length]});
+  const H=['Lp.','Kondygnacja','Klatka','Lokal','Pomieszczenie','Rodzaj','Usterka','Uwagi','Status','Data wpisu','Wpisał(a)','Data poprawy','Poprawił(a)','Zdjęcia'];
+  const R=rows.map((d,i)=>{const u=Store.data.units.get(d.unitId)||{};return [i+1,(Store.data.floors.get(d.floorId)||{}).name||'',u.klatka||'',u.name||'',d.room||'',(CAT[d.cat]||CAT.inne).name,d.title,d.note||'',d.done?'poprawione':'do poprawy',fmtDate(d.createdAt),d.createdBy||'',d.done?fmtDate(d.doneAt):'',d.done?(d.doneBy||''):'',(d.photos||[]).length]});
   return '﻿'+[H,...R].map(r=>r.map(q).join(';')).join('\r\n');
 }
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Nie wczytano '+src));(document.head||document.body).appendChild(s)})}
@@ -1076,7 +1315,7 @@ async function makePdf(p,rows,summary,withPhotos){
   const box=done=>({canvas:[{type:'rect',x:0,y:0,w:9,h:9,r:1,lineWidth:.8,lineColor:'#333333'}].concat(done?[{type:'polyline',points:[{x:1.8,y:4.6},{x:3.9,y:7},{x:7.6,y:1.9}],lineWidth:1.4,lineColor:green}]:[]),margin:[0,1.5,0,0]});
   const content=[{text:'PROTOKÓŁ USTEREK',style:'h1'},{text:p.name,style:'h2'}];
   if(p.address)content.push({text:p.address,color:gray,margin:[0,0,0,6]});
-  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor],['Liczba pozycji',String(rows.length)]);
+  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor]);if(fd.extra)meta.push(['Filtry',fd.extra]);meta.push(['Liczba pozycji',String(rows.length)]);
   content.push({table:{widths:[95,'*'],body:meta.map(r=>[{text:r[0],color:gray},{text:r[1],bold:true}])},layout:'noBorders',margin:[0,6,0,10]});
   const sc=CATS.map(k=>{const a=summary.filter(d=>d.cat===k.id);return [k.name,a.filter(d=>!d.done).length,a.filter(d=>d.done).length,a.length]}).filter(r=>r[3]);
   if(sc.length){
@@ -1093,7 +1332,7 @@ async function makePdf(p,rows,summary,withPhotos){
     lp++;
     const desc=[{text:d.title,bold:true,color:d.done?gray:'#111111'}];
     if(d.note)desc.push({text:d.note,color:'#333333',margin:[0,1,0,0]});
-    desc.push({text:d.done?'Poprawione '+fmtDate(d.doneAt):'Wpisano '+fmtDate(d.createdAt),fontSize:7.5,color:d.done?green:gray,margin:[0,1,0,0]});
+    desc.push({text:(d.createdBy?'Wpisał(a): '+d.createdBy+', '+fmtDate(d.createdAt):'Wpisano '+fmtDate(d.createdAt))+(d.done?(d.doneBy?' · Poprawione: '+d.doneBy+', ':' · Poprawione ')+fmtDate(d.doneAt):''),fontSize:7.5,color:d.done?green:gray,margin:[0,1,0,0]});
     const ph=(d.photos||[]).slice(0,3).map(r=>imgs.get(r)).filter(Boolean);
     if(ph.length)desc.push({columns:ph.map(src=>({image:src,fit:[100,75],width:104})),columnGap:4,margin:[0,4,0,0]});
     if(withPhotos&&(d.photos||[]).length>3)desc.push({text:`+ ${(d.photos.length-3)} kolejne zdjęcia w aplikacji`,fontSize:7.5,color:gray});
@@ -1181,7 +1420,7 @@ document.addEventListener('click',async e=>{
     case 'ufilter':S.unitFilter=t.dataset.f;render();break;
     case 'add-defect':openDefectForm(S.unitId,null);break;
     case 'edit-defect':{const d=Store.data.defects.get(id);if(d)openDefectForm(d.unitId,id);break}
-    case 'toggle':{const d=Store.data.defects.get(id);if(!d)break;const done=!d.done;persist('defects',Object.assign({},d,{done,doneAt:done?Date.now():null,updatedAt:Date.now()}));toast(done?'Poprawione ✓':'Wróciło do poprawy');break}
+    case 'toggle':{const d=Store.data.defects.get(id);if(!d)break;const done=!d.done;persist('defects',stamp(Object.assign({},d,{done,doneAt:done?Date.now():null,updatedAt:Date.now()}),d));toast(done?'Poprawione ✓':'Wróciło do poprawy');break}
     case 'photo':{const d=Store.data.defects.get(id);if(d)openLightbox(d.photos||[],+t.dataset.i);break}
     case 'report':S.report.klatka=selKlatka(S.projectId);go('report');break;
     case 'kl':S.kl.set(S.projectId,t.dataset.k);render();break;
@@ -1189,24 +1428,51 @@ document.addEventListener('click',async e=>{
     case 'rcat':S.report.cat=t.dataset.cat;render();break;
     case 'rcat-toggle':S.report.cat=S.report.cat===t.dataset.cat?'all':t.dataset.cat;render();break;
     case 'rstatus':S.report.status=t.dataset.s;render();break;
+    case 'rdate':S.report.dateField=t.dataset.f;if(t.dataset.f==='done'&&S.report.status==='open'&&(S.report.from||S.report.to))S.report.status='done';render();break;
+    case 'rrange':{const d=t.dataset.d;if(d==='all'){S.report.from='';S.report.to=''}else{S.report.to=isoDay(Date.now());S.report.from=isoDay(Date.now()-(+d)*864e5)}if(S.report.dateField==='done'&&S.report.status==='open'&&S.report.from)S.report.status='done';render();break}
+    case 'rclear':Object.assign(S.report,{q:'',who:'',fixer:'',from:'',to:''});render();break;
     case 'rphotos':S.report.photos=t.checked;Prefs.set('pdfPhotos',t.checked);break;
     case 'exp-txt':{const p=Store.data.projects.get(S.projectId);const txt=reportText(p,reportData(p).rows);try{await navigator.clipboard.writeText(txt);toast('Skopiowano. Wklej w SMS, WhatsApp albo e-mail.')}catch(err){openSheet(`${sheetHead('Tekst zestawienia')}<div class="sh-b gut"><p class="hint">Zaznacz i skopiuj tekst:</p><textarea class="inp txtout" readonly id="txt-out"></textarea></div>`,{full:true,onMount:el=>{const ta=el.querySelector('#txt-out');ta.value=txt;setTimeout(()=>{ta.focus();ta.select()},300)}})}break}
     case 'exp-csv':{const p=Store.data.projects.get(S.projectId);const {rows}=reportData(p);offerFile(`Usterki_${slug(p.name)}_${S.report.cat==='all'?'wszystkie':S.report.cat}_${ymd()}.csv`,new Blob([reportCsv(rows)],{type:'text/csv'}));break}
     case 'exp-pdf':{const p=Store.data.projects.get(S.projectId);const {rows,summary}=reportData(p);t.disabled=true;const old=t.innerHTML;t.innerHTML='<span class="spin" style="width:20px;height:20px;border-width:2.5px"></span>Tworzę PDF…';
       try{const b=await makePdf(p,rows,summary,S.report.photos);await offerFile(`Usterki_${slug(p.name)}_${S.report.cat==='all'?'wszystkie':S.report.cat}_${ymd()}.pdf`,b)}catch(err){console.warn(err);toast('Nie udało się utworzyć PDF.')}finally{if(t.isConnected){t.disabled=false;t.innerHTML=old}}break}
     case 'backup':exportBackup();break;
+    case 'sync-now':await Sync.run();toast(Sync.err?(Sync.err==='offline'?'Brak połączenia z NAS':Sync.err):'Zsynchronizowano');if(S.view==='settings')render();break;
+    case 'change-pass':openPasswordForm();break;
+    case 'logout':logout();break;
+    case 'new-user':openUserForm(null);break;
+    case 'edit-user':openUserForm(id);break;
+    case 'audit':openAudit();break;
     case 'restore':$('#restore-file').click();break;
   }
 });
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='r-more')S.report.more=e.target.open},true);
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='r-floor'){S.report.floor=t.value;render()}
+  else if(t.id==='r-q'){S.report.q=t.value;render()}
+  else if(t.id==='r-who'){S.report.who=t.value;render()}
+  else if(t.id==='r-fixer'){S.report.fixer=t.value;if(t.value&&S.report.status==='open')S.report.status='done';render()}
+  else if(t.id==='r-from'||t.id==='r-to'){S.report[t.id==='r-from'?'from':'to']=t.value;if(S.report.dateField==='done'&&S.report.status==='open'&&t.value)S.report.status='done';render()}
   else if(t.id==='r-kl'){S.report.klatka=t.value;render()}
   else if(t.id==='restore-file'&&t.files&&t.files[0]){importBackup(t.files[0]);t.value=''}
 });
 
 /* ---------- boot ---------- */
+function registerSW(){if(!Env.artifact&&'serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{})}
 async function boot(){
+  if(!Env.artifact&&window.indexedDB){
+    // on the NAS api.php answers: shared team data; elsewhere (e.g. GitHub Pages) the app keeps data on the device
+    const pr=await probeServer();
+    if((pr&&pr!=='offline')||(pr==='offline'&&Prefs.get('server',false))){
+      try{
+        B=ServerBackend;Store.mode='server';await ServerBackend.init();
+        if(pr==='offline'){Store.user=Prefs.get('srvUser',null);Sync.err='offline'}
+        else{Store.user=pr.user;Store.setup=!!pr.setup;Prefs.set('server',true);Prefs.set('srvUser',pr.user)}
+        Store.ready=true;bump();render();openFromHash();if(Store.user)Sync.run();registerSW();return;
+      }catch(e){console.warn('server mode unavailable',e)}
+    }
+  }
   if(Env.artifact){
     let db=null,assets=null,dl=null;
     try{[db,assets,dl]=await Promise.all([window.claude.use('db'),window.claude.use('assets').catch(()=>null),window.claude.use('downloads').catch(()=>null)])}catch(e){}
@@ -1220,8 +1486,7 @@ async function boot(){
   }catch(e){
     console.warn('local storage unavailable',e);B=MemoryBackend;Store.mode='memory';for(const k of KINDS)Store.data[k]=new Map();
   }
-  Store.ready=true;bump();render();openFromHash();
-  if(!Env.artifact&&'serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+  Store.ready=true;bump();render();openFromHash();registerSW();
 }
 boot();
 })();
