@@ -229,6 +229,12 @@ textarea.inp{min-height:76px;resize:vertical;line-height:1.4}
 .rg-u button{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left}
 .rg-u button:hover{color:var(--accent)}
 .rg-u span{font:500 13.5px var(--f-body);color:var(--ink-2)}
+details.more{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding-inline:12px}
+details.more>summary{display:flex;align-items:center;min-height:46px;font-weight:600;cursor:pointer;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";margin-left:auto;font:600 22px var(--f-display);color:var(--ink-2)}
+details.more[open]>summary::after{content:"–"}
+.more-b{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
 .checkline{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px}
 .checkline input{width:22px;height:22px;accent-color:var(--accent)}
 
@@ -553,7 +559,23 @@ function klatkiOf(pid){const p=Store.data.projects.get(pid);const out=[...((p&&p
 function selKlatka(pid){const k=S.kl.get(pid)||'all';return k==='all'||klatkiOf(pid).includes(k)?k:'all'}
 function parseKlatki(v){return [...new Set(String(v||'').split(/[,;\s]+/).map(x=>x.trim()).filter(Boolean))].slice(0,12)}
 function unitSeq(pid){const kl=klatkiOf(pid),lv=new Map(floorsOf(pid).map((f,i)=>[f.id,i]));return unitsOfProject(pid).slice().sort((a,b)=>(kl.indexOf(a.klatka||'')-kl.indexOf(b.klatka||''))||(lv.get(a.floorId)-lv.get(b.floorId))||((a.order||0)-(b.order||0))||cmp(a.name,b.name))}
-const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor].filter(Boolean).join(' · ');
+const fdLine=fd=>[fd.cat,fd.status,fd.klatka,fd.floor,fd.extra].filter(Boolean).join(' · ');
+const norm=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ł/g,'l');
+const isoDay=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dayFmt=v=>v?v.split('-').reverse().join('.'):'';
+/* extra report filters: text search, who added / who fixed, date range of adding or fixing */
+function extraMatch(R){
+  const q=norm(R.q).trim(),U=Store.data.units;
+  const from=R.from?new Date(R.from+'T00:00:00').getTime():null,to=R.to?new Date(R.to+'T23:59:59.999').getTime():null;
+  return d=>{
+    if(q&&!norm([d.title,d.note,d.room,(CAT[d.cat]||CAT.inne).name,(U.get(d.unitId)||{}).name,d.createdBy,d.doneBy].join(' ')).includes(q))return false;
+    if(R.who&&d.createdBy!==R.who)return false;
+    if(R.fixer&&(!d.done||d.doneBy!==R.fixer))return false;
+    if(from!=null||to!=null){const t=R.dateField==='done'?(d.done?d.doneAt:null):d.createdAt;if(!t||(from!=null&&t<from)||(to!=null&&t>to))return false}
+    return true;
+  };
+}
+const extraActive=R=>!!(R.q.trim()||R.who||R.fixer||R.from||R.to);
 
 function writeErr(e){
   console.warn(e);const c=e&&e.code;
@@ -610,7 +632,7 @@ function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader(
 async function dataUrlToBlob(u){const r=await fetch(u);return r.blob()}
 
 /* ---------- navigation ---------- */
-const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',photos:Prefs.get('pdfPhotos',true)}};
+const S={view:'home',projectId:null,unitId:null,unitFilter:'all',kl:new Map(),report:{cat:'all',status:'open',floor:'all',klatka:'all',q:'',who:'',fixer:'',dateField:'created',from:'',to:'',more:false,photos:Prefs.get('pdfPhotos',true)}};
 const stack=[];let ignorePop=false;
 function go(view,params={}){
   stack.push({view:S.view,projectId:S.projectId,unitId:S.unitId,y:window.scrollY});
@@ -825,7 +847,7 @@ function reportData(p){
   if(R.floor!=='all'&&!fl.some(f=>f.id===R.floor))R.floor='all';
   if(R.klatka!=='all'&&!kl.includes(R.klatka))R.klatka='all';
   const st=d=>R.status==='all'||(R.status==='open'?!d.done:d.done);
-  let ds=defectsOfProject(p.id);
+  let ds=defectsOfProject(p.id).filter(extraMatch(R));
   if(R.klatka!=='all')ds=ds.filter(d=>unitKl(d.unitId)===R.klatka);
   const byStatus=ds.filter(st);
   if(R.floor!=='all')ds=ds.filter(d=>d.floorId===R.floor);
@@ -837,7 +859,28 @@ function reportData(p){
   return {fl,kl,rows,byStatus,forChips,summary};
 }
 function filterDesc(){
-  const R=S.report;return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka)};
+  const R=S.report,ex=[];
+  if(R.q.trim())ex.push('szukane: „'+R.q.trim()+'”');
+  if(R.who)ex.push('wpisał(a): '+R.who);
+  if(R.fixer)ex.push('poprawił(a): '+R.fixer);
+  if(R.from||R.to)ex.push((R.dateField==='done'?'poprawione ':'wpisane ')+(R.from&&R.to?dayFmt(R.from)+' – '+dayFmt(R.to):R.from?'od '+dayFmt(R.from):'do '+dayFmt(R.to)));
+  return {cat:R.cat==='all'?'wszystkie rodzaje':CAT[R.cat].name,status:STATUS[R.status],floor:R.floor==='all'?'wszystkie kondygnacje':((Store.data.floors.get(R.floor)||{}).name||''),klatka:R.klatka==='all'?'':kLabel(R.klatka),extra:ex.join(', ')};
+}
+function reportExtraHtml(p){
+  const R=S.report,all=defectsOfProject(p.id);
+  const names=k=>[...new Set(all.map(d=>d[k]).filter(Boolean))].sort(cmp);
+  const ws=names('createdBy'),fs=names('doneBy');const today=isoDay(Date.now());
+  const ago=n=>isoDay(Date.now()-n*864e5);const rng=(n)=>R.to===today&&R.from===(n===0?today:ago(n));
+  const nAct=[R.who,R.fixer,R.from||R.to].filter(Boolean).length;
+  const opt=(list,cur,label)=>`<option value="">${label}: wszyscy</option>`+list.map(n=>`<option value="${esc(n)}" ${cur===n?'selected':''}>${label}: ${esc(n)}</option>`).join('');
+  return `<label class="vh" for="r-q">Szukaj</label><input type="search" class="inp" id="r-q" enterkeyhint="search" placeholder="Szukaj: np. parapet, M12, nazwisko" value="${esc(R.q)}">
+    <details class="more" id="r-more" ${R.more||nAct?'open':''}><summary>Osoba i data${nAct?` (${nAct})`:''}</summary><div class="more-b">
+      ${ws.length||fs.length?`<label class="vh" for="r-who">Wpisał(a)</label><select class="inp" id="r-who">${opt(ws,R.who,'Wpisał(a)')}</select><label class="vh" for="r-fixer">Poprawił(a)</label><select class="inp" id="r-fixer">${opt(fs,R.fixer,'Poprawił(a)')}</select>`:''}
+      <div class="seg" role="group" aria-label="Która data"><button data-act="rdate" data-f="created" aria-pressed="${R.dateField==='created'}">Data wpisu</button><button data-act="rdate" data-f="done" aria-pressed="${R.dateField==='done'}">Data poprawy</button></div>
+      <div class="chips sm"><button class="chip" data-act="rrange" data-d="0" aria-pressed="${rng(0)}">Dziś</button><button class="chip" data-act="rrange" data-d="7" aria-pressed="${rng(7)}">7 dni</button><button class="chip" data-act="rrange" data-d="30" aria-pressed="${rng(30)}">30 dni</button><button class="chip" data-act="rrange" data-d="all" aria-pressed="${!R.from&&!R.to}">Cały czas</button></div>
+      <div class="grid2"><div><label class="lbl" for="r-from">Od</label><input class="inp" type="date" id="r-from" value="${esc(R.from)}"></div><div><label class="lbl" for="r-to">Do</label><input class="inp" type="date" id="r-to" value="${esc(R.to)}"></div></div>
+    </div></details>
+    ${extraActive(R)?`<div class="row"><button class="btn sm" data-act="rclear">${ic(UI.x)}Wyczyść wyszukiwanie i filtry osoby/daty</button></div>`:''}`;
 }
 function viewReport(){
   const p=Store.data.projects.get(S.projectId);if(!p){S.view='home';return viewHome()}
@@ -870,6 +913,7 @@ function viewReport(){
       <div class="seg" role="group" aria-label="Status">${seg}</div>
       <div class="chips">${chips}</div>
       <div class="${kl.length?'grid2':''}">${kl.length?`<div><label class="vh" for="r-kl">Klatka</label><select class="inp" id="r-kl"><option value="all">Wszystkie klatki</option>${kl.map(k=>`<option value="${esc(k)}" ${R.klatka===k?'selected':''}>${esc(kLabel(k))}</option>`).join('')}</select></div>`:''}<div><label class="vh" for="r-floor">Kondygnacja</label><select class="inp" id="r-floor">${flOpts}</select></div></div>
+      ${reportExtraHtml(p)}
     </section>
     <section class="sec"><div class="sh"><h2>${rows.length} ${plural(rows.length,'pozycja','pozycje','pozycji')} · ${esc(fd.cat)}${fd.klatka?' · '+esc(fd.klatka):''}</h2></div>
       ${rows.length?`<div class="dl">${list}</div>`:`<p class="hint">Brak usterek dla wybranego filtra.</p>`}
@@ -1271,7 +1315,7 @@ async function makePdf(p,rows,summary,withPhotos){
   const box=done=>({canvas:[{type:'rect',x:0,y:0,w:9,h:9,r:1,lineWidth:.8,lineColor:'#333333'}].concat(done?[{type:'polyline',points:[{x:1.8,y:4.6},{x:3.9,y:7},{x:7.6,y:1.9}],lineWidth:1.4,lineColor:green}]:[]),margin:[0,1.5,0,0]});
   const content=[{text:'PROTOKÓŁ USTEREK',style:'h1'},{text:p.name,style:'h2'}];
   if(p.address)content.push({text:p.address,color:gray,margin:[0,0,0,6]});
-  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor],['Liczba pozycji',String(rows.length)]);
+  const meta=[['Data zestawienia',fmtDate(Date.now())],['Rodzaj',fd.cat],['Status',fd.status]];if(klatkiOf(p.id).length)meta.push(['Klatka',fd.klatka||'wszystkie klatki']);meta.push(['Kondygnacje',fd.floor]);if(fd.extra)meta.push(['Filtry',fd.extra]);meta.push(['Liczba pozycji',String(rows.length)]);
   content.push({table:{widths:[95,'*'],body:meta.map(r=>[{text:r[0],color:gray},{text:r[1],bold:true}])},layout:'noBorders',margin:[0,6,0,10]});
   const sc=CATS.map(k=>{const a=summary.filter(d=>d.cat===k.id);return [k.name,a.filter(d=>!d.done).length,a.filter(d=>d.done).length,a.length]}).filter(r=>r[3]);
   if(sc.length){
@@ -1384,6 +1428,9 @@ document.addEventListener('click',async e=>{
     case 'rcat':S.report.cat=t.dataset.cat;render();break;
     case 'rcat-toggle':S.report.cat=S.report.cat===t.dataset.cat?'all':t.dataset.cat;render();break;
     case 'rstatus':S.report.status=t.dataset.s;render();break;
+    case 'rdate':S.report.dateField=t.dataset.f;if(t.dataset.f==='done'&&S.report.status==='open'&&(S.report.from||S.report.to))S.report.status='done';render();break;
+    case 'rrange':{const d=t.dataset.d;if(d==='all'){S.report.from='';S.report.to=''}else{S.report.to=isoDay(Date.now());S.report.from=isoDay(Date.now()-(+d)*864e5)}if(S.report.dateField==='done'&&S.report.status==='open'&&S.report.from)S.report.status='done';render();break}
+    case 'rclear':Object.assign(S.report,{q:'',who:'',fixer:'',from:'',to:''});render();break;
     case 'rphotos':S.report.photos=t.checked;Prefs.set('pdfPhotos',t.checked);break;
     case 'exp-txt':{const p=Store.data.projects.get(S.projectId);const txt=reportText(p,reportData(p).rows);try{await navigator.clipboard.writeText(txt);toast('Skopiowano. Wklej w SMS, WhatsApp albo e-mail.')}catch(err){openSheet(`${sheetHead('Tekst zestawienia')}<div class="sh-b gut"><p class="hint">Zaznacz i skopiuj tekst:</p><textarea class="inp txtout" readonly id="txt-out"></textarea></div>`,{full:true,onMount:el=>{const ta=el.querySelector('#txt-out');ta.value=txt;setTimeout(()=>{ta.focus();ta.select()},300)}})}break}
     case 'exp-csv':{const p=Store.data.projects.get(S.projectId);const {rows}=reportData(p);offerFile(`Usterki_${slug(p.name)}_${S.report.cat==='all'?'wszystkie':S.report.cat}_${ymd()}.csv`,new Blob([reportCsv(rows)],{type:'text/csv'}));break}
@@ -1399,9 +1446,14 @@ document.addEventListener('click',async e=>{
     case 'restore':$('#restore-file').click();break;
   }
 });
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='r-more')S.report.more=e.target.open},true);
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='r-floor'){S.report.floor=t.value;render()}
+  else if(t.id==='r-q'){S.report.q=t.value;render()}
+  else if(t.id==='r-who'){S.report.who=t.value;render()}
+  else if(t.id==='r-fixer'){S.report.fixer=t.value;if(t.value&&S.report.status==='open')S.report.status='done';render()}
+  else if(t.id==='r-from'||t.id==='r-to'){S.report[t.id==='r-from'?'from':'to']=t.value;if(S.report.dateField==='done'&&S.report.status==='open'&&t.value)S.report.status='done';render()}
   else if(t.id==='r-kl'){S.report.klatka=t.value;render()}
   else if(t.id==='restore-file'&&t.files&&t.files[0]){importBackup(t.files[0]);t.value=''}
 });

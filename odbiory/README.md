@@ -7,7 +7,7 @@ Prosta aplikacja do odbiorów budynku wielorodzinnego (działa na telefonie, tak
 - **Usterki w mieszkaniu.** Rodzaj (okna, drzwi, elektryka, hydraulika, ogrzewanie, wentylacja, tynki, malowanie, posadzki, płytki, balkon, inne) i typowe usterki wybiera się z listy. Można też wpisać własny opis, pomieszczenie i uwagi.
 - **Zdjęcia.** Zdjęcie robi się aparatem albo wybiera z galerii. Aplikacja je zmniejsza i nanosi na nie datę i godzinę.
 - **Odhaczanie.** Duże pole „poprawione” przy każdej usterce, z datą poprawy.
-- **Zestawienia.** Tabela rodzaj × kondygnacja i filtr wg rodzaju, statusu, klatki i kondygnacji. Eksport do PDF (protokół z miejscem na podpisy, opcjonalnie ze zdjęciami), do Excela (CSV) albo jako tekst do wklejenia w SMS lub WhatsApp.
+- **Zestawienia.** Tabela rodzaj × kondygnacja i filtr wg rodzaju, statusu, klatki i kondygnacji, wyszukiwanie (np. „parapet”, „M12”, nazwisko) oraz filtr wg osoby (kto wpisał, kto poprawił) i daty wpisu albo poprawy. Eksport do PDF (protokół z miejscem na podpisy, opcjonalnie ze zdjęciami), do Excela (CSV) albo jako tekst do wklejenia w SMS lub WhatsApp.
 - **Kopia zapasowa.** Plik .json ze wszystkimi danymi i zdjęciami.
 
 Aplikacja startuje pusta. Przykładową budowę można wczytać przyciskiem na ekranie startowym albo w Ustawieniach.
